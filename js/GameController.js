@@ -283,9 +283,13 @@ export default class Game {
       console.log('--- [DEBUG] CHECKING AUTH STATUS ON startGame ---');
       try {
           const status = await api.checkAuthStatus();
-          console.log('[DEBUG] startGame auth check SUCCESS:', status.user);
+          if (status.user) {
+            console.log('[DEBUG] startGame auth check SUCCESS:', status.user);
+          } else {
+            console.log('[DEBUG] startGame auth check: No user is logged in.');
+          }
       } catch (e) {
-          console.error('[DEBUG] startGame auth check FAILED:', e.message);
+          console.log('[DEBUG] startGame auth check: No user is logged in.');
       }
       // --- END DEBUG ---
       try {

@@ -123,7 +123,8 @@ export function drawPatients(patients) {
       ctx.save();
       ctx.translate(p.x, p.y);
       ctx.rotate(p.rotation);
-      if (p.img && p.img.complete) {
+      // ✅ Only draw the image if it exists and has loaded without errors.
+      if (p.img && p.img.complete && p.img.naturalHeight !== 0) {
         ctx.drawImage(p.img, -size / 2, -size / 2, size, size);
       } else {
         ctx.beginPath();
