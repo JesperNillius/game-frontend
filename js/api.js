@@ -1,4 +1,4 @@
-export const API_URL = 'http://localhost:3000';
+export const API_URL = 'https://aqten-game-backend.onrender.com';
 
 // --- Auth Endpoints ---
 export async function registerUser(username, password) {
