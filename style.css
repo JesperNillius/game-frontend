@@ -1,0 +1,2130 @@
+ :root { color-scheme: dark; }
+    body {
+      margin: 0;
+      background: #111;
+      font-family: Arial, sans-serif;
+      color: #fff;
+    }
+    canvas {
+      position: absolute;
+      inset: 0;
+      margin: auto;
+      display: block;
+      background: #222;
+      z-index: 0;
+    }
+
+    /* --- New Initial Menu Styles --- */
+
+/* The semi-transparent backdrop that fills the screen */
+
+/* The actual popup box */
+.menu-popup {
+  background: #2a2a2e;
+  padding: 30px 40px;
+  border-radius: 12px;
+  border: 1px solid #555;
+  text-align: center;
+  box-shadow: 0 5px 25px rgba(0,0,0,0.5);
+}
+
+.menu-popup h2 {
+  margin-top: 0;
+  margin-bottom: 24px;
+  font-family: 'Inter', sans-serif;
+  color: #eee;
+}
+
+/* The container for the buttons */
+.menu-controls {
+  display: flex;
+  flex-direction: column; /* Stack buttons vertically */
+  gap: 15px; /* Space between buttons */
+}
+
+/* Make buttons larger and more prominent */
+.menu-controls button {
+  padding: 12px 25px;
+  font-size: 18px;
+  min-width: 200px; /* Give buttons a consistent width */
+}
+   
+    h1 { margin: 0 0 16px; font-weight: 700; }
+    input[type="file"] {
+      background: #333; border: 1px solid #444; border-radius: 8px; padding: 8px;
+    }
+    button {
+      padding: 10px 18px; font-size: 16px; border: none; border-radius: 8px;
+      cursor: pointer; background: #444; color: #fff; transition: background .2s;
+    }
+    button:hover { background: #666; }
+
+    /* Patient info panel */
+    #infoPanel {
+      position: fixed;
+      top: 0; right: -300px; height: 100%; width: 300px;
+      background: #1e1e1e; border-left: 2px solid #333;
+      padding: 20px;
+      box-sizing: border-box;
+      transition: right 0.3s ease;
+      z-index: 2;
+      overflow-y: auto;
+    }
+    #infoPanel.open { right: 0; }
+    #infoPanel h2 { margin-top: 0; }
+    #closeInfo {
+      background: #444; color: #fff; border: none; border-radius: 6px;
+      padding: 6px 12px; cursor: pointer; margin-top: 10px;
+    }
+        /* Patient info sidebar */
+    #patientInfo {
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: 220px;
+    height: 100%;
+    background: #222;
+    color: white;
+    padding: 15px;
+    display: none; /* hidden until patient is clicked */
+    z-index: 2;
+    }
+    #patientInfo h2 {
+    margin-top: 0;
+    }
+
+    /* Room action sidebar */
+    #roomMenu {
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: 220px;
+    height: 100%;
+    background: #333;
+    color: white;
+    padding: 15px;
+    display: none; /* hidden until zoom in */
+    z-index: 2;
+    box-sizing: border-box; /* <-- Add this line */
+
+    }
+    #roomMenu h2 {
+    margin-top: 0;
+    }
+    #roomMenu button {
+    display: block;
+    width: 100%;
+    margin: 8px 0;
+    padding: 10px;
+    font-size: 16px;
+    background: #444;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    }
+    #roomMenu button:hover {
+    background: #666;
+    }
+
+    #roomMenu #btnHomeMeds {
+      background-color: #4A90E2; /* A soft, distinct blue */
+    }
+
+    #roomMenu #btnHomeMeds:hover {
+      background-color: #5A9EEA; /* A slightly lighter blue for the hover effect */
+    }
+
+    /* In index.html, inside the <style> tag */
+
+.room {
+  /* ... your existing styles for .room ... */
+  border: 1px solid #444;
+  padding: 10px;
+  margin: 10px;
+  border-radius: 8px;
+  background-color: #2a2a2a;
+  
+  /* --- Add these lines --- */
+  background-repeat: no-repeat;
+  background-position: center center;
+  background-size: contain; /* This makes the image fit inside the div */
+}
+
+    /* Style for the waiting room */
+    #waiting-room {
+      /* Change the url path here */
+      background-image: url('/images/waiting_chair.png');
+      background-size: 40%;
+      background-position: center 60%;
+    }
+
+    /* Style for all patient rooms */
+    .patient-room {
+      /* And change the url path here */
+      background-image: url('/images/patient_bed.png');
+      background-size: 70%;
+    }
+
+    .game-ui {
+    position: absolute;
+    top: 15px;
+    left: 15px;
+    z-index: 2; /* Ensures it's above the canvas */
+    }
+    /* Vitals Pop-up Menu */
+#vitalsPopup {
+  display: none; /* This makes it hidden by default */
+  position: absolute;
+  top: 15px;
+  left: 15px;
+  width: 220px;
+  background: #2a2a2e;
+  border: 1px solid #555;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+  z-index: 10;
+  font-size: 14px;
+  
+  /* Layout properties */
+  max-height: 90vh;
+  overflow-y: auto;
+  flex-direction: column;
+  padding: 0;
+}
+#vitalsPopup.zoomed-out-position {
+    margin-top: 55px; /* The offset to avoid the top bar */
+}
+
+#vitalsHeader {
+  padding: 12px 12px 0 12px;
+  flex-shrink: 0;
+}
+
+#vitalsBody {
+  padding: 12px;
+  overflow-y: auto; /* This will stop the "popping out" */
+}
+#vitalsTitle {
+  margin: 0 0 10px 0;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #555;
+  text-align: center;
+  font-size: 16px;
+  color: #fff;
+}
+#vitalsContent div {
+  padding: 4px 0;
+  border-bottom: 1px solid #333;
+}
+#vitalsContent div:last-child {
+  border-bottom: none;
+}
+
+/* Generic Submenu Styling */
+/* Generic Submenu Styling */
+/* Generic Submenu Styling */
+.submenu {
+  display: none; /* This correctly sets the default to hidden */
+  position: absolute;
+  top: 0;
+  width: 200px;
+  height: 100%;
+  background: #2a2a2e;
+  color: white;
+  padding: 15px;
+  z-index: 2;
+  border-left: 2px solid #444;
+  box-sizing: border-box;
+  
+  /* These properties will apply when it's made visible as a flex container */
+  flex-direction: column;
+}
+
+.submenu h4 {
+  margin-top: 0;
+  text-align: center;
+  border-bottom: 1px solid #555;
+  padding-bottom: 10px;
+}
+
+.submenu button {
+  display: block;
+  width: 100%;
+  margin: 8px 0;
+  padding: 10px;
+  font-size: 16px;
+  background: #333;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.submenu button:hover {
+  background: #555;
+}
+
+/* Accordion Styling */
+#vitalsBody .accordion:first-child {
+  margin-top: 0;
+}
+.accordion {
+  margin-top: 15px;
+}
+.accordion-header {
+  background: #3c3c42;
+  color: #fff;
+  cursor: pointer;
+  padding: 10px;
+  width: 100%;
+  border: none;
+  text-align: left;
+  outline: none;
+  font-size: 15px;
+  transition: 0.4s;
+  border-radius: 6px;
+}
+.accordion-header:hover, .accordion-header.active {
+  background-color: #4a4a52;
+}
+.accordion-header::after {
+  content: ''; /* We're creating a shape, not using text */
+  float: right;
+  margin-left: 5px;
+  margin-top: 5px; /* Adjust vertical alignment */
+  
+  /* This creates the arrow shape using borders */
+  border: solid #ccc;
+  border-width: 0 2px 2px 0;
+  display: inline-block;
+  padding: 3px;
+  
+  /* Point the arrow down by default (closed state) */
+  transform: rotate(45deg);
+  
+  /* Add a smooth animation to the rotation */
+  transition: transform 0.2s ease-out;
+}
+
+.accordion-header.active::after {
+  /* Point the arrow up when the accordion is active (open state) */
+  transform: rotate(-135deg);
+}
+.accordion-content {
+  padding: 0 12px;
+  background-color: #2a2a2e;
+  max-height: 0;
+  overflow: hidden;   
+  transition: max-height 0.2s ease-out;
+  font-size: 14px;
+}
+.accordion-content div {
+  padding: 6px 0;
+  border-bottom: 1px solid #3f3f44;
+}
+.accordion-content div:last-child {
+  border-bottom: none;
+}
+
+
+/* Styling for all search inputs inside submenus */
+.submenu-search-input {
+  width: 100%;
+  padding: 8px;
+  margin-bottom: 10px;
+  border-radius: 6px;
+  border: 1px solid #555; /* or var(--border-color) if you set that up */
+  background: #1e1e1e;
+  color: #fff;
+  box-sizing: border-box;
+}
+
+/* Styling for the container that will hold the test buttons */
+#labTestList {
+  overflow-y: auto; /* Adds a scrollbar if the list is long */
+  height: calc(100% - 80px); /* Fill remaining space */
+}
+.chief-complaint {
+  font-style: italic;
+  color: #ccc;
+  margin: 5px 0 10px 0;
+  text-align: center;
+  font-size: 14px;
+  border-bottom: 1px solid #444;
+  padding-bottom: 10px;
+}
+
+/* --- CHAT WINDOW STYLING --- */
+
+/* Position the chat window in the shared submenu space */
+#chatWindow {
+  right: 220px;
+  flex-direction: column; /* Stack items vertically */
+}
+
+/* The area where messages appear */
+#chatMessages {
+  flex-grow: 1; /* This is the key: it makes the message area expand to fill all available vertical space */
+  background: #1e1e1e;
+  border-radius: 6px;
+  margin-bottom: 10px;
+  padding: 8px;
+  overflow-y: auto; /* Adds a scrollbar if messages get long */
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Container for the input and send button at the bottom */
+.chat-input-area {
+  display: flex;
+  gap: 5px;
+}
+
+#chatInput {
+  flex-grow: 1; /* Makes the input field take up most of the width */
+  border: 1px solid #555;
+  background: #1e1e1e;
+  color: #fff;
+  border-radius: 6px;
+  padding: 8px;
+}
+
+#sendBtn {
+  padding: 8px 12px;
+}
+
+/* --- CHAT BUBBLE STYLING (You should already have this) --- */
+.chat-bubble {
+  padding: 10px 15px;
+  border-radius: 18px;
+  max-width: 80%;
+  word-wrap: break-word;
+}
+.user-bubble {
+  background-color: #555;
+  color: #fff;
+  align-self: flex-end;
+  border-bottom-right-radius: 4px;
+}
+.patient-bubble {
+  background-color: #555;
+  color: #fff;
+  align-self: flex-start;
+  border-bottom-left-radius: 4px;
+}
+
+.btn-action-final {
+  margin-top: 20px !important;
+  background-color: #2c6e3b !important; /* A calm green */
+}
+.btn-action-final:hover {
+  background-color: #3f8c53 !important;
+}
+
+/* --- Styles for specific modals and their content --- */
+.disposition-choices {
+    display: flex;
+    justify-content: center;
+    align-items: baseline; /* ✅ Aligns the text inside the buttons */
+    gap: 15px;
+}
+
+#closeFeedback {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  background: transparent;
+  border: none;
+  font-size: 24px;
+  color: var(--text-color-muted);
+  padding: 5px 10px;
+  line-height: 1;
+  box-shadow: none;
+}
+
+#closeFeedback:hover {
+  color: #fff;
+  background: var(--panel-background-alt);
+}
+
+/* --- Final Feedback Report Styling --- */
+.feedback-section h4, #feedbackContent h4 {
+  margin-top: 15px;
+  margin-bottom: 8px;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 5px;
+  color: var(--text-color);
+}
+/* --- New Feedback Report Grid Styles --- */
+.feedback-grid {
+  display: grid;
+  /* Create responsive columns that are at least 250px wide 
+     and automatically fill the available space. */
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 10px; /* Sets the space between the grid items */
+  margin-top: 10px;
+}
+/* Style for sub-headings in the feedback report */
+.modal-content h5 {
+  margin-top: 15px;
+  margin-bottom: 5px;
+  color: #ccc;
+  border-bottom: 1px solid #444;
+  padding-bottom: 4px;
+}
+
+/* Minor adjustment to the items inside the grid */
+.feedback-grid .feedback-task {
+  margin: 0; /* Remove the old vertical margin to keep grid spacing consistent */
+}
+.feedback-section p, #feedbackContent p {
+  margin: 5px 0;
+}
+.feedback-task {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  margin: 4px 0;
+  border-radius: 6px;
+  background-color: var(--panel-background-alt);
+  border: 1px solid transparent;
+}
+.task-icon {
+  font-weight: bold;
+  font-size: 16px;
+  margin-right: 12px;
+  width: 20px;
+  text-align: center;
+}
+.task-name {
+  flex-grow: 1;
+}
+.feedback-task.correct {
+  background-color: #28362b;
+  border-color: #34c759;
+}
+.feedback-task.correct .task-icon {
+  color: #34c759;
+}
+.feedback-task.missed {
+  background-color: #422727;
+  border-color: #ff3b30;
+}
+.feedback-task.missed .task-icon {
+  color: #ff3b30;
+}
+.feedback-task.neutral {
+  background-color: #333;
+  border-color: #888;
+}
+.feedback-task.neutral .task-icon {
+  color: #888;
+}
+.feedback-unnecessary {
+  color: #ff9500;
+  list-style: none;
+}
+/* Position all submenus in the same shared space */
+#generalSearchMenu,
+#physicalExamMenu,
+#labMenu,
+#chatWindow,
+#medsMenu,
+#bedsideMenu,
+#radiologyMenu {
+  right: 220px;
+  left: auto; /* Ensure left positioning is disabled */
+}
+#generalSearchResultList {
+  flex-grow: 1; /* Allows the list to grow and fill available space */
+  overflow-y: auto; /* Adds a vertical scrollbar only when needed */
+  min-height: 0; /* Prevents a common flexbox scrolling issue */
+}
+
+#medsList {
+  overflow-y: auto; /* Add a vertical scrollbar only when needed */
+  height: calc(100% - 80px); /* Fill the remaining vertical space */
+}
+/* In index.html, in the <style> tag */
+#ekgImageContainer {
+  width: 100%;
+  margin: 15px 0;
+  background: #111;
+  padding: 10px;
+  box-sizing: border-box;
+  border-radius: 6px;
+}
+#ekgImage {
+  width: 100%;
+  display: block;
+}
+#closeEkgModal {
+  position: absolute; top: 5px; right: 5px; background: transparent;
+  border: none; font-size: 24px; color: #888; cursor: pointer;
+}
+/* --- New Score Display Styles --- */
+.feedback-score-container {
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.feedback-score-container h3 {
+  margin: 0;
+  color: #ccc;
+  font-weight: 600;
+}
+
+.score-circle {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  font-size: 28px;
+  font-weight: bold;
+  margin-top: 10px;
+  color: #fff;
+}
+
+/* Add different border colors based on the score */
+.score-circle.medium {
+  border-color: #ffc107; /* Orange for medium scores */
+}
+.score-circle.low {
+  border-color: #ff3b30; /* Red for low scores */
+}
+/* --- UI Feedback Styles --- */
+
+/* The container for a result that is loading */
+.pending-result {
+  display: flex;
+  align-items: center;
+  color: #aaa; /* Muted color for pending text */
+  font-style: italic;
+  padding: 6px 0; /* Match other result rows */
+  border-bottom: 1px solid #3f3f44; /* Match other result rows */
+}
+
+/* The spinner animation */
+.spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid #555; /* Light grey track */
+  border-top-color: #fff; /* White moving part */
+  border-radius: 50%;
+  margin-left: 10px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.spinner-inline {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border: 2px solid #555;
+    border-top-color: #fff;
+    border-radius: 50%;
+    margin-left: 8px;
+    vertical-align: middle;
+    animation: spin 1s linear infinite;
+}
+
+
+.feedback-task .task-icon {
+  margin-right: 6px; /* Space between icon and text. */
+  font-weight: bold;
+}
+
+/* Subheadings (e.g., "Critical", "Lab Tests") */
+.feedback-category-title {
+  font-size: 15px;
+  margin-top: 8px;
+  margin-bottom: 4px;
+  font-weight: 600;
+  color: #444;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 3px;
+}
+
+/* --- Critical Patient Warning --- */
+#critical-warning-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(255, 0, 0, 0.15);
+  pointer-events: none; /* Allows you to click through it */
+  z-index: 1000;
+  animation: critical-flash 1.2s infinite ease-in-out;
+}
+
+#critical-warning-overlay.hidden {
+  display: none;
+}
+
+@keyframes critical-flash {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}
+/* style.css */
+
+#loginForm {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  align-items: center;
+}
+
+#loginForm input {
+  padding: 10px;
+  font-size: 16px;
+  width: 80%;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+.error-message {
+  color: #ff5252;
+  font-size: 14px;
+  margin-top: 10px;
+  height: 20px; /* Reserve space to prevent layout shift */
+}
+
+.error-message.hidden {
+  visibility: hidden;
+}
+/* Add these styles to your main stylesheet */
+
+/* This rule applies to both your login screen and main menu */
+
+/* Ensure your canvas has a lower z-index */
+#gameCanvas {
+  /* It might be a good idea to ensure the canvas is positioned too */
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1;
+}
+
+.secondary-btn {
+  background-color: #6c757d;
+}
+.secondary-btn:hover {
+  background-color: #5a6268;
+}
+
+/* --- UNIFIED STYLES FOR ALL POPUP MENUS --- */
+
+/* This styles the full-screen backdrop for any menu */
+.menu-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 10;
+  
+  /* This centers the content inside */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+/* ✅ This is the crucial rule that hides the menu */
+.menu-container.hidden {
+  display: none;
+}
+
+#loginControls.hidden {
+  display: none;
+}
+
+.hidden {
+  display: none !important;
+}
+
+/* --- NEW DARK THEME FOR MAIN MENU --- */
+
+/* The main container box for the menu */
+.menu-popup {
+  background: #2a2a2e;        /* Dark background from vitals popup */
+  color: #EAEAEA;            /* Light gray text for readability */
+  padding: 20px 40px;
+  border-radius: 8px;
+  border: 1px solid #555;     /* Border color from vitals popup */
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+  min-width: 320px;
+  text-align: center;
+}
+
+/* The main title (e.g., "ER Simulator") */
+.menu-popup h1 {
+  color: #FFFFFF;
+  margin: 0 0 25px 0;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #555; /* Divider line like in vitals */
+}
+
+/* This is the container for the main menu buttons */
+#mainMenuControls {
+  display: flex;
+  flex-direction: column;
+  gap: 12px; /* This adds space between each button */
+}
+
+/* General styles for all buttons in the menu */
+#mainMenuControls > button {
+  width: 100%;
+  padding: 12px 20px;
+  font-size: 18px;
+  margin: 0;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/* --- Button Colors --- */
+
+/* Primary "Play" button */
+#mainMenuControls > #playBtn {
+  background-color: #5C8D89; /* Muted teal/green from previous theme */
+  color: #FFFFFF;
+}
+#mainMenuControls > #playBtn:hover {
+  background-color: #4A726E;
+}
+
+/* Disabled button style */
+#mainMenuControls > button:disabled {
+  background-color: #444; /* Darker gray for disabled state */
+  color: #888;
+  cursor: not-allowed;
+}
+
+/* Secondary buttons (Settings, Log In) */
+#mainMenuControls > #settingsBtn,
+#mainMenuControls > #showLoginBtn {
+  background-color: #555; /* Medium gray to match borders */
+  color: #EAEAEA;
+}
+#mainMenuControls > #caseHistoryBtn {
+  background-color: #555;
+  color: #EAEAEA;
+}
+#mainMenuControls > #settingsBtn:hover,
+#mainMenuControls > #leaderboardBtn:hover,
+#mainMenuControls > #showLoginBtn:hover,
+#mainMenuControls > #caseHistoryBtn:hover {
+  background-color: #666; /* Lighter gray for hover */
+}
+
+#mainMenuControls > #leaderboardBtn {
+    background-color: #555;
+    color: #EAEAEA;
+}
+/* --- Custom Oxygen Slider Styles (Final) --- */
+.slider-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 20px 0;
+  gap: 15px;
+}
+.slider-wrapper {
+  position: relative; /* Establishes a layering context */
+  width: 80%;
+  display: flex;
+  align-items: center;
+}
+#oxygenFlowRateLabel {
+  min-width: 60px;
+  text-align: center;
+  font-weight: bold;
+  font-size: 18px;
+}
+
+#slider-ticks {
+  position: absolute;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: space-between;
+  pointer-events: none;
+  z-index: 1; /* Layer 1: Ticks are in the back */
+}
+#slider-ticks span {
+  width: 2px;
+  height: 16px; /* Taller ticks to be visible behind the track */
+  background: #888;
+  border-radius: 2px;
+}
+
+#oxygenSlider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 8px;
+  background: #555; /* Opaque track color */
+  border-radius: 5px;
+  outline: none;
+  margin: 0;
+  position: relative; /* Required for z-index */
+  z-index: 2; /* Layer 2: Track is on top of ticks */
+}
+
+#oxygenSlider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 24px;
+  background: #cad2e0;
+  cursor: grab;
+  border-radius: 4px;
+  margin-top: -8px;
+  position: relative; /* Required for z-index */
+  z-index: 3; /* Layer 3: Thumb is on top of everything */
+}
+
+#oxygenSlider::-moz-range-thumb {
+  width: 16px;
+  height: 24px;
+  background: #cad2e0;
+  cursor: grab;
+  border: none;
+  border-radius: 4px;
+  position: relative;
+  z-index: 3;
+}
+
+#oxygenSlider:active::-webkit-slider-thumb,
+#oxygenSlider:active::-moz-range-thumb {
+  cursor: grabbing;
+}
+
+/* --- Style for all scrollable lists inside submenus --- */
+#medsList, #labTestList, #physicalExamList, #bedsideTestList, #radiologyTestList {
+  flex-grow: 1; /* Allows the list to grow and fill available space */
+  overflow-y: auto; /* Adds a vertical scrollbar only when needed */
+  min-height: 0; /* Prevents a common flexbox scrolling issue */
+}
+
+/* --- Admission Plan Modal Styles --- */
+.plan-form {
+  text-align: left;
+  margin-top: 20px;
+}
+.plan-section {
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #444;
+}
+.plan-section:last-child {
+  border-bottom: none;
+}
+.plan-section h4 {
+  margin-top: 0;
+  margin-bottom: 12px;
+  color: #ccc;
+}
+.plan-section label {
+  display: block;
+  margin: 10px 0 5px 0;
+  font-size: 14px;
+  color: #aaa;
+}
+.modal-content select,
+.modal-content input[type="number"],
+.modal-content textarea {
+  width: 100%;
+  padding: 10px;
+  border-radius: 6px;
+  border: 1px solid #555;
+  background: #1e1e1e;
+  color: #fff;
+  box-sizing: border-box;
+  font-size: 16px;
+}
+
+/* --- Scrollable Medication List in Admission Plan --- */
+#planMedicationOrdersList {
+    max-height: 25vh; /* Limit the height to 25% of the screen's height */
+    overflow-y: auto;   /* Add a vertical scrollbar when needed */
+    padding: 10px;
+    margin-top: 10px;
+    background-color: #1c1c1e; /* A slightly darker background for the list area */
+    border-radius: 6px;
+    border: 1px solid #444;
+}
+/* --- Admission Plan - Medication Order List Styles --- */
+#planMedicationOrdersList .order-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  background-color: #1e1e1e;
+  padding: 10px;
+  border-radius: 6px;
+  margin-bottom: 8px;
+  border: 1px solid #444;
+}
+#planMedicationOrdersList .order-item .med-name {
+  font-weight: bold;
+  flex-grow: 1; /* Allow name to take up available space */
+}
+#planMedicationOrdersList .order-item .frequency-select {
+  padding: 4px 6px;
+  border-radius: 4px;
+  border: 1px solid #555;
+  background: #2a2a2e;
+  color: #fff;
+}
+#planMedicationOrdersList .order-item .btn-remove-order {
+  padding: 4px 10px;
+  font-size: 14px;
+  background-color: #7c3232;
+}
+#planMedicationOrdersList .order-item .btn-remove-order:hover {
+  background-color: #a34141;
+}
+
+/* Style for the new pause button in the admission plan */
+.order-item .btn-toggle-pause {
+    padding: 4px 10px;
+    font-size: 14px;
+    background-color: #6c757d; /* A neutral gray */
+}
+.order-item .btn-toggle-pause:hover {
+    background-color: #5a6268;
+}
+
+/* Style for the paused state */
+.order-item.paused {
+    opacity: 0.6;
+    background-color: #222;
+}
+/* --- Admission Plan Checkbox Styles --- */
+.checkbox-group {
+  margin-top: 15px;
+}
+.checkbox-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+}
+.checkbox-item input[type="checkbox"] {
+  width: auto;
+  margin-right: 10px;
+}
+.checkbox-item label {
+  margin: 0; /* Override default label margin */
+  font-size: 16px;
+  color: #fff;
+}
+#userInfo {
+  position: fixed;
+  top: 15px;
+  right: 15px;
+  padding: 8px 12px;
+  background-color: rgba(42, 42, 46, 0.8); /* Semi-transparent dark background */
+  color: white;
+  border-radius: 6px;
+  border: 1px solid #555;
+  z-index: 10; /* Ensures it stays on top of the canvas */
+  font-size: 14px;
+}
+#user-session-controls {
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    z-index: 1001; /* Ensure it's above the canvas */
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+#userInfo span {
+    color: #fff;
+    font-weight: bold;
+    margin-right: 10px;
+}
+
+/* A general utility class to hide elements */
+.hidden {
+    display: none !important;
+}
+
+/* NEW STYLES for the top bar */
+#top-ui-bar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    background-color: rgba(0, 0, 0, 0.4);
+    padding: 10px 20px;
+    box-sizing: border-box; /* Ensures padding doesn't add to the width */
+    display: flex;
+    justify-content: space-between; /* Pushes children to opposite ends */
+    align-items: center;
+    z-index: 1000;
+    transition: transform 0.3s ease-in-out; /* For smooth hiding/showing */
+}
+
+/* Add a rule for when the bar is hidden */
+#top-ui-bar.hidden {
+    transform: translateY(-100%); /* Slides the bar up out of view */
+}
+
+
+/* UPDATED STYLES for the user session controls */
+#user-session-controls {
+    /* REMOVE position: absolute, top, and right from the old rule */
+    z-index: 1001;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+#userInfo {
+    display: flex;
+    align-items: center; /* This is the key property for vertical alignment */
+    gap: 10px;
+}
+
+#userInfo > * { /* This targets the <span> and <button> inside */
+    margin: 0;   /* Removes any default browser margins */
+}
+.feedback-tabs {
+    display: flex;
+    border-bottom: 1px solid #555; /* A solid line to separate tabs from content */
+}
+
+/* Style for individual tab buttons (both active and inactive) */
+.tab-link {
+    padding: 10px 20px;
+    cursor: pointer;
+    border: 1px solid transparent; /* Start with a transparent border */
+    border-bottom: none; /* No bottom border to start */
+    background-color: #3a3a3a; /* Inactive background color */
+    color: #ccc;
+    font-size: 16px;
+    border-radius: 6px 6px 0 0; /* Rounded top corners */
+    margin-right: 5px;
+    position: relative;
+    top: 1px; /* Slightly push down to align with the bottom border */
+}
+
+.tab-link:hover {
+    background-color: #4a4a4a;
+}
+
+/* Style for ONLY the active tab */
+.tab-link.active {
+    background-color: #2c2c2e; /* Match the content area background */
+    border-color: #555; /* Give it a solid border */
+    color: #fff;
+    font-weight: bold;
+}
+
+.tab-content {
+    display: none; /* Hide all tab content by default */
+}
+
+.tab-content.active {
+    display: block; /* Show only the active tab's content */
+}
+
+/* --- Generic Modal Styles --- */
+
+/* The semi-transparent backdrop */
+.modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+
+    /* Hidden by default */
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+/* The state when the modal should be visible */
+.modal-backdrop.visible {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* The white content box inside the modal */
+.modal-content {
+    background-color: #2c2c2e;
+    padding: 20px 30px;
+    border-radius: 12px;
+    box-shadow: 0 5px 25px rgba(0, 0, 0, 0.5);
+    width: 90%;
+    max-width: 600px; /* Adjust as needed */
+    
+    /* A subtle pop-in animation */
+    transform: scale(0.95);
+    transition: transform 0.3s ease;
+}
+
+.modal-backdrop.visible .modal-content {
+    transform: scale(1);
+}
+
+#dosingModal.visible, #oxygenModal.visible {
+    z-index: 2001;
+}
+
+.order-item {
+    display: flex;            /* Aligns children in a row */
+    align-items: center;      /* Vertically centers all items */
+    gap: 15px;                /* Adds space between each item */
+    padding: 10px;
+    background-color: #3a3a3a;
+    border-radius: 6px;
+    margin-bottom: 8px;
+}
+
+.order-item .med-name {
+    flex-grow: 1;             /* Allows the name to take up all extra space */
+    font-weight: bold;
+    color: #fff;
+}
+
+.order-item .med-dose {
+    flex-shrink: 0;           /* Prevents the dose from shrinking */
+    background-color: #2c2c2e;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.9em;
+    color: #ccc;
+}
+
+.order-item .frequency-select {
+    flex-shrink: 0;           /* Prevents the dropdown from shrinking */
+    width: auto;              /* Fixes the "too wide" issue */
+}
+
+.order-item .btn-remove-order {
+    flex-shrink: 0;           /* Prevents the button from shrinking */
+}
+
+/* --- Dosing Modal Style Overhaul --- */
+
+/* Target the content box ONLY inside the dosing modal */
+#dosingModal .modal-content {
+    width: auto;          /* Let the content define the width */
+    min-width: 300px;     /* Stop it from getting too narrow */
+    text-align: center;   /* Center the "Set Dose for..." title */
+}
+
+/* This is the container for the preset dose buttons */
+#doseChoices {
+    display: flex;
+    justify-content: center;
+    gap: 12px;            /* Adds space between the buttons */
+    margin-top: 20px;
+    flex-wrap: wrap;      /* Allows buttons to wrap if needed */
+}
+
+/* A cleaner style for the dose buttons themselves */
+#doseChoices .btn {
+    background-color: #555;
+    border: 1px solid #666;
+    font-weight: bold;
+    transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+#doseChoices .btn:hover {
+    background-color: #6a6a6a;
+    transform: translateY(-2px); /* A subtle "lift" effect on hover */
+}
+
+/* --- Manual Dose Input Styles --- */
+
+/* This is the container for the input box and the unit text (e.g., "mg") */
+#manualDoseContainer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    margin: 20px 0;
+}
+
+/* This styles the actual input box */
+#doseInput {
+    width: 120px; /* You can adjust this width as needed */
+    padding: 10px;
+    font-size: 1.2em;
+    font-weight: bold;
+    text-align: center;
+    border: 1px solid #555;
+    background-color: #1c1c1e;
+    color: #fff;
+    border-radius: 6px;
+}
+
+/* This styles the unit text next to the box */
+#doseUnitSpan {
+    font-size: 1.1em;
+    color: #ccc;
+}
+
+.modal-footer {
+    display: flex;
+    justify-content: center; /* This is the key property to center the buttons */
+    gap: 15px;               /* Adds some space between the buttons */
+    margin-top: 25px;        /* Adds space above the buttons */
+    padding-top: 15px;       /* Adds space above the buttons inside the border */
+    border-top: 1px solid #444; /* Adds a nice separator line */
+}
+
+/* --- Style for the Admission Plan Medication Selection --- */
+
+/* Target the button container specifically inside the 'Add Med' modal */
+#addPlanMedModal .menu-button-grid {
+    display: flex;
+    flex-direction: column; /* This is the key: stack items vertically */
+    gap: 5px;               /* Space between each button/row */
+    margin-top: 15px;
+    
+    /* Make the list scrollable if it gets too long */
+    max-height: 40vh;       /* Limit height to 40% of the viewport height */
+    overflow-y: auto;       /* Add a scrollbar when needed */
+    padding-right: 5px;     /* Add some space for the scrollbar */
+}
+
+/* Style the buttons inside the new column layout */
+#addPlanMedModal .menu-button-grid .btn {
+    width: 100%;              /* Make buttons fill the full width */
+    text-align: left;         /* Align text to the left for a list-like feel */
+    background-color: #3a3a3a;
+    border: none;
+    padding: 12px 15px;
+}
+
+#addPlanMedModal .menu-button-grid .btn:hover {
+    background-color: #0d2e42; /* Highlight on hover */
+    color: #fff;
+}
+/* --- Polishing the "Add Medication" Modal --- */
+
+/* 1. Style for the Search Field */
+.search-input {
+    width: 100%;
+    padding: 10px 15px;
+    background-color: #1c1c1e;
+    border: 1px solid #444;
+    border-radius: 6px;
+    color: #fff;
+    font-size: 16px;
+    box-sizing: border-box; /* Ensures padding is included in the width */
+}
+
+.search-input::placeholder {
+    color: #888;
+}
+
+/* 2. Styles for the Modal Header and Close Button */
+.modal-header {
+    display: flex;
+    justify-content: space-between; /* Pushes title and button to opposite ends */
+    align-items: center;
+    margin-bottom: 0px;
+    border-bottom: 1px solid #444;
+    padding-bottom: 10px;
+}
+
+.modal-header h2 {
+    margin: 0; /* Remove default heading margin */
+}
+
+.btn-close {
+    background: none;
+    border: none;
+    font-size: 2.2rem; /* Makes the '×' character larger */
+    line-height: 1;
+    color: #888;
+    cursor: pointer;
+    padding: 0 5px;
+}
+
+.btn-close:hover {
+    color: #fff;
+}
+
+/* --- Fixed Size for "Add Medication" Modal --- */
+
+/* Give the modal's content box a fixed height and turn it into a flex container */
+#addPlanMedModal .modal-content {
+    height: 75vh;          /* Set height to 75% of the viewport's height */
+    max-height: 400px;     /* Set a max pixel height for very tall screens */
+    display: flex;
+    flex-direction: column;
+}
+
+/* Make the modal's body expand to fill the available vertical space */
+#addPlanMedModal .modal-body {
+    display: flex;
+    flex-direction: column;
+    gap: 15px; /* ✅ This creates consistent space between children */
+    flex-grow: 1;
+    overflow: hidden;
+}
+
+/* Make the scrollable list fill the new space inside the modal body */
+#addPlanMedModal .menu-button-grid {
+    flex-grow: 1;
+    margin-bottom: 0;
+}
+/* --- Button Group Styles --- */
+.button-group {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.btn-toggle {
+    flex-grow: 1; /* Makes all buttons share the width equally */
+    padding: 8px 12px;
+    cursor: pointer;
+    background-color: #3a3a3a; /* Default inactive style */
+    border: 1px solid #555;
+    color: #ccc;
+    border-radius: 6px;
+    font-size: 0.9em;
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.btn-toggle:hover {
+    background-color: #4a4a4a;
+}
+
+.btn-toggle.active {
+    background-color: #2274A5; /* Active/selected style */
+    color: #fff;
+    border-color: #2274A5;
+}
+/* --- Styles for the Disposition Modal --- */
+
+/* Make the modal's content box shrink to fit its content */
+#dispositionModal .modal-content {
+    width: auto;      /* Let the content define the width */
+    max-width: 500px; /* A smaller max-width for this simple modal */
+    text-align: center;
+}
+
+/* This is the container for the "Send Home" and "Admit to Ward" buttons */
+#dispositionModal .disposition-choices {
+    display: flex;
+    justify-content: center;
+    gap: 15px;        /* Space between the buttons */
+    margin: 20px 0;
+    align-items: baseline;
+
+}
+
+/* --- Fixed Size for Feedback Modal --- */
+
+/* Give the modal's content box a fixed height and make it a flex container */
+#feedbackModal .modal-content {
+    height: 80vh;          /* Set height to 80% of the viewport's height */
+    max-height: 700px;     /* Set a max pixel height for very tall screens */
+    display: flex;
+    flex-direction: column;
+}
+
+/* Make the modal body (which contains tabs and content) fill the available space */
+#feedbackModal .modal-body {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    overflow: hidden; /* Prevent the body itself from scrolling */
+}
+
+/* This is the container we added for the tab content panels */
+.feedback-content-container {
+    flex-grow: 1;           /* Make this container fill the space in the body */
+    overflow-y: auto;       /* Make it scrollable */
+    padding-right: 10px;    /* Add some space for the scrollbar */
+}
+ .feedback-task.solution {
+    background-color: #333; /* A neutral background for the correct answer */
+}
+.button-toggle-group {
+    margin-top: 10px;
+    display: flex;
+    flex-direction: column; /* Stack the buttons vertically */
+    gap: 8px;               /* Add space between them */
+    align-items: flex-start; /* Align to the left */
+}
+
+/* We can also make the buttons in this group not stretch to full width */
+.button-toggle-group .btn-toggle {
+    flex-grow: 0;
+}
+/* --- Styles for the Diagnosis Modal --- */
+
+/* Make the modal's content box shrink to a more appropriate size */
+#diagnosisModal .modal-content {
+    width: auto;      /* Let the content define the width */
+    max-width: 500px; /* Set a reasonable maximum width */
+}
+
+/* Style the text area for the diagnosis input */
+#diagnosisModal #diagnosisInput {
+    width: 100%;
+    padding: 12px 15px; /* Adjust padding for a single line */
+    font-size: 1em;
+    box-sizing: border-box;
+    
+    /* Match the style of other inputs */
+    background-color: #1c1c1e;
+    border: 1px solid #444;
+    border-radius: 6px;
+    color: #fff;
+    /* REMOVED min-height and resize properties */
+}
+
+/* --- Spacing Fix for Diagnosis Modal --- */
+
+/* Turn the modal's content box into a flex container */
+#diagnosisModal .modal-content {
+    display: flex;
+    flex-direction: column;
+/* This will create consistent space between header, body, and footer */
+}
+
+/* This ensures the body of the diagnosis modal doesn't have extra empty space */
+#diagnosisModal .modal-body {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 0; /* This is the key: it prevents the body from expanding unnecessarily */
+}
+
+/* --- Case Report Overhaul --- */
+
+/* New Header Styles */
+.feedback-header {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #444;
+    margin-bottom: 15px;
+    position: relative;
+}
+
+.close-button { /* Position the close button */
+    position: absolute;
+    top: -10px;
+    right: -10px;
+}
+.score-circle {
+    position: relative; /* This is essential */
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    
+    /* The background is NOW ONLY the colored progress ring */
+    background: conic-gradient(
+        #4caf50 0%,
+        #4caf50 var(--score-percent, 0%),
+        var(--bad-score-color, #f44336) var(--score-percent, 0%),
+        var(--bad-score-color, #f44336) 100%
+    );
+}
+
+/* This ::before pseudo-element creates the "hole" in the middle */
+.score-circle::before {
+    content: '';
+    position: absolute;
+    border-radius: 50%;
+    
+    /* Make the hole slightly smaller than the main circle. 
+       A width/height of 80% creates a ring that is 10% thick on each side. */
+    width: 75%;
+    height: 75%;
+    
+    /* Match the color of your modal's background */
+    background-color: #2c2c2e;
+}
+
+.score-circle span {
+    font-size: 1.4 em;
+    font-weight: bold;
+    color: #fff;
+    
+    /* We need to use z-index to make sure the text appears on top of the "hole" */
+    position: relative; 
+    z-index: 2;
+}
+
+.diagnosis-summary h2 {
+    margin: 0 0 5px 0;
+}
+
+.correct-diagnosis {
+    color: #ccc;
+    font-size: 0.9em;
+}
+
+.correct-diagnosis span {
+    font-weight: bold;
+    color: #fff;
+}
+
+
+/* Minimalistic Content Styles */
+.feedback-content-container h5, .feedback-content-container h6 {
+    margin-top: 20px;
+    margin-bottom: 10px;
+    color: #ccc;
+    border-bottom: 1px solid #444;
+    padding-bottom: 5px;
+}
+
+
+.feedback-items-grid {
+    display: grid; /* Use a grid layout instead of flex */
+    
+    /* Create as many columns as can fit, with a minimum width of 200px each */
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); 
+    
+    gap: 5px; /* Space between the items */
+}
+
+.feedback-task {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 4px 6px; /* Slightly reduced padding */
+    border-radius: 3px;
+    background-color: #3a3a3a; /* Give each item a subtle background */
+    border-left: 4px solid transparent;
+}
+
+.feedback-task.correct {
+    border-left-color: #4caf50; /* Green for correct */
+}
+
+.feedback-task.missed {
+    border-left-color: #f44336; /* Red for missed */
+}
+
+.task-icon {
+    font-size: 1.2em;
+}
+
+/* --- Case Report Header Polish --- */
+
+/* Style for the new summary section */
+.feedback-summary {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 15px 0;
+    margin-bottom: 15px;
+    border-bottom: 1px solid #444;
+}
+
+.diagnosis-display {
+    font-size: 2.0em;      /* Make the font size larger */
+    font-weight: 300;      /* Use a lighter font weight for the "Correct Diagnosis:" text */
+    color: #ccc;
+    text-align: center;    /* Center the text for a more formal look */
+    margin-top: 10px;      /* Add some space below the score circle */
+}
+
+/* This targets the <span> inside, which holds the actual diagnosis name */
+.diagnosis-display span {
+    display: block;        /* Puts the diagnosis on a new line */
+    margin-top: 5px;       /* Adds space above the diagnosis text */
+    font-weight: 600;      /* Make the diagnosis itself bold */
+}
+
+/* These color rules remain the same */
+.diagnosis-display.diagnosis-correct span {
+    color: #4caf50;
+}
+
+.diagnosis-display.diagnosis-incorrect span {
+    color: #f44336;
+}
+
+.importance-columns {
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* Creates two equal-width columns */
+    gap: 25px;                      /* Adds space between the columns */
+    align-items: start;             /* Aligns columns to the top */
+}
+
+.column {
+    /* This is the container for each column's content.
+       You can add borders or backgrounds here if you like. */
+}
+.feedback-content-container h5 {
+    font-size: 1.2em;      /* Make it larger */
+    font-weight: 600;      /* Make it bolder */
+    color: #ffffff;        /* Make it bright white */
+    margin-top: 25px;      /* Add more space above it */
+    margin-bottom: 0px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #555;
+}
+
+/* Style for the sub-category titles (e.g., "Critical") */
+.feedback-content-container h6 {
+    font-size: 0.9em;      /* Make it smaller */
+    font-weight: 500;      /* Make it less bold */
+    color: #aaa;           /* Make it a dimmer gray */
+    margin-bottom: 10px;
+    border-bottom: none;   /* Remove the underline to reduce visual noise */
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* --- Final Lab Result Layout --- */
+
+/* --- Final, Consolidated Lab Result Styles --- */
+
+/* --- Corrected Lab Result Layout --- */
+
+/* --- Final Lab Result Layouts --- */
+
+/* 1. DEFAULT STYLE for single-line results (e.g., B-Hemoglobin) */
+.lab-result-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 8px 0;
+    border-bottom: 1px solid #444;
+}
+
+.lab-result-name {
+    font-weight: bold;
+    color: #fff;
+}
+
+.lab-result-value {
+    color: #ccc;
+}
+
+.lab-result-value.abnormal {
+    color: #F86A6C;
+    font-weight: bold;
+}
+
+
+/* 2. OVERRIDE STYLE for panel results (e.g., Arteriell Blodgas) */
+.lab-result-item.is-panel {
+    display: block; /* ✅ This breaks the flex row and stacks the items */
+    padding: 10px 0;
+}
+
+.lab-result-item.is-panel .lab-result-name {
+    margin-bottom: 10px;
+    padding-bottom: 5px;
+    border-bottom: 1px solid #555; /* Adds a separator line */
+    display: block; /* Ensures it takes its own line */
+}
+
+.lab-result-item.is-panel .lab-result-value {
+    text-align: left; /* Aligns the grid to the left */
+}
+
+
+/* 3. Style for the grid itself (remains the same) */
+.abg-grid {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 5px 15px; /* A bit more space */
+    max-width: 250px; /* Prevents it from getting too wide */
+}
+
+.abg-grid span:nth-child(odd) {
+    text-align: left;
+    color: #ccc;
+}
+
+.abg-grid span:nth-child(even) {
+    text-align: right;
+    font-weight: bold;
+}
+
+.abg-grid span.abnormal {
+    color: #F86A6C;
+}
+.patient-message-wrapper {
+    align-self: flex-start;
+    max-width: 80%;
+}
+
+.user-message-wrapper {
+    align-self: flex-end;
+    max-width: 80%;
+}
+
+.chat-bubble-label {
+    font-size: 0.75rem;
+    color: #888;
+    margin-left: 10px;
+    margin-bottom: 2px;
+}
+
+
+/* --- Prescription & Checkbox List Styles --- */
+
+/* This turns the grid into a single, scrollable column */
+.checkbox-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    margin-top: 15px;
+    
+    /* This is the key to making it scrollable with a fixed height */
+    height: 35vh; /* Limit height to 35% of the screen */
+    overflow-y: auto;   /* Add a scrollbar when needed */
+    padding: 5px;
+    background-color: #1c1c1e; /* A slightly darker background for the list */
+    border-radius: 6px;
+    border: 1px solid #444;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    background-color: #3a3a3a;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.checkbox-label:hover {
+    background-color: #4a4a4a;
+}
+
+/* --- Selected Prescriptions Area --- */
+#selectedPrescriptionsContainer {
+    margin-top: 15px;
+    padding-top: 10px;
+    border-top: 1px solid #444;
+}
+
+#selectedPrescriptionsContainer h6 {
+    margin: 0 0 10px 0;
+    color: #aaa;
+    font-size: 0.9em;
+    text-transform: uppercase;
+}
+
+#selectedPrescriptionsList {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    min-height: 24px; /* Prevents layout shift when empty */
+}
+
+.selected-item-tag {
+    background-color: #2274A5; /* Use the same blue as toggle buttons */
+    color: #fff;
+    padding: 5px 10px;
+    border-radius: 12px; /* Pill shape */
+    font-size: 0.9em;
+}
+
+.no-items-message {
+    color: #888;
+    font-style: italic;
+}
+
+/* --- Button Group Styles --- */
+.button-group {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+
+.btn-secondary {
+    background-color: #6c757d;
+}
+
+.btn-secondary:hover {
+    background-color: #5a6268;
+}
+
+/* --- Case History Modal Styles --- */
+.history-container {
+    max-height: 60vh;
+    overflow-y: auto;
+    padding-right: 10px; /* Space for scrollbar */
+}
+
+.history-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+}
+
+.history-table th, .history-table td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid #444;
+}
+
+.history-table th {
+    background-color: #3a3a3c;
+    font-weight: 600;
+    color: #eee;
+    position: sticky;
+    top: 0;
+}
+
+.history-table tbody tr:hover {
+    background-color: #3a3a3c;
+}
+
+.history-table .score-cell {
+    font-weight: bold;
+    text-align: right;
+    font-size: 1.1em;
+}
+
+.history-table .no-items-message {
+    padding: 20px;
+    text-align: center;
+}
+
+.history-table .rank-cell {
+    font-weight: bold;
+    font-size: 1.2em;
+    text-align: center;
+}
+
+.history-patient-cell {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.history-patient-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    object-fit: cover;
+    background-color: #444;
+}
+
+.history-table .score-cell {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 15px;
+}
+
+.score-circle-small {
+    position: relative;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: grid; /* Use grid to center the text */
+    place-items: center;
+    background: conic-gradient(
+        #4caf50 0%, /* Start with green */
+        #4caf50 var(--score-percent, 0%), /* Green part of the ring */
+        var(--bad-score-color, #444) var(--score-percent, 0%), /* The "unfilled" part uses the new color */
+        var(--bad-score-color, #444) 100%
+    );
+    flex-shrink: 0; /* Prevents the circle from shrinking */
+}
+
+.score-circle-small::before {
+    content: '';
+    position: absolute;
+    border-radius: 50%;
+    width: 75%;
+    height: 75%;
+    background-color: #3a3a3c; /* Match the table row hover color for the "hole" */
+}
+
+.score-circle-small span {
+    position: relative;
+    z-index: 2;
+    font-size: 10px; /* Smaller font for the small circle */
+    font-weight: bold;
+    color: #fff;
+}
+
+.history-table .history-main-row {
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.history-table .history-main-row:hover {
+    background-color: #4f4f52; /* Slightly lighter for hover effect */
+}
+
+.history-details-row.hidden {
+    display: none;
+}
+
+.history-details-row td {
+    padding: 0;
+    background-color: #222426; /* Darker background for the details panel */
+}
+
+.history-details-content {
+    padding: 15px 25px;
+}
+
+.history-details-content h6 {
+    margin: 0 0 10px 0;
+    color: #ccc;
+    font-size: 1em;
+    font-weight: 600;
+    border-bottom: 1px solid #444;
+    padding-bottom: 5px;
+    margin-top: 15px;
+}
+
+.history-details-content h6:first-child {
+    margin-top: 0;
+}
+
+.history-details-content ul {
+    margin: 0;
+    padding-left: 20px;
+}
+
+/* --- Home Medication List Styles --- */
+.home-med-item {
+    display: flex;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid #3f3f44;
+    transition: opacity 0.3s ease;
+}
+
+.home-med-item.paused {
+    opacity: 0.5;
+}
+
+.home-med-item.paused .home-med-name {
+    text-decoration: line-through;
+}
+
+.home-med-item.pending-removal {
+    background-color: #3a2e2e;
+    justify-content: space-between;
+    opacity: 1; /* Start fully visible */
+}
+
+.home-med-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.home-med-name {
+    font-weight: bold;
+    width: 120px; /* Give the name a fixed width */
+    flex-shrink: 0; /* Prevent it from shrinking if space is tight */
+    white-space: nowrap; /* Keep the name on one line */
+    overflow: hidden; /* Hide any overflow */
+    text-overflow: ellipsis; /* Add '...' if the name is too long */
+}
+
+.home-med-inputs {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-top: 4px;
+}
+
+.home-med-dose-input, .home-med-freq-input {
+    width: 75px !important;
+    max-width: 75px !important;
+    padding: 4px 6px;
+    background-color: #1c1c1e;
+    border: 1px solid #555;
+    color: #fff;
+    border-radius: 4px;
+    text-align: center;
+    font-size: 0.9em;
+    box-sizing: border-box; /* This is the key fix */
+}
+
+.home-med-unit {
+    color: #aaa;
+    min-width: 25px;
+}
+
+.home-med-dose {
+    font-size: 0.9em;
+    color: #aaa;
+}
+
+.home-med-actions {
+    margin-left: auto; /* This pushes the button's container to the far right */
+}
+
+.home-med-actions .btn-small {
+    padding: 4px 8px;
+    font-size: 0.8em;
+    background-color: #555;
+}
+.home-med-actions .btn-small:hover {
+    background-color: #666;
+}
+
+.home-med-actions .btn-remove {
+    background-color: #7c3232;
+}
+
+.home-med-actions .btn-remove:hover {
+    background-color: #a34141;
+}
+
+.undo-text {
+    font-style: italic;
+    color: #aaa;
+}
+
+.btn-undo {
+    background-color: #6c757d !important; /* A neutral gray */
+}
+
+.btn-undo:hover {
+    background-color: #5a6268 !important; /* A darker gray for hover */
+}

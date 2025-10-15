@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Patient Rooms with Info Panel</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+
+  </head>
+  <body>
+
+
+  <div id="app-container"> 
+    <canvas id="gameCanvas"></canvas>
+  </div>
+
+    <div id="top-ui-bar">
+      <div id="game-controls">
+          <button id="backToMenuBtn" class="btn">Main Menu</button>
+      </div>
+
+      <div id="user-session-controls">
+          <button id="topRightLoginBtn" class="btn">Log In</button>
+          <div id="userInfo" class="hidden">
+              <span id="usernameDisplay"></span>
+              <button id="topRightLogoutBtn" class="btn">Logout</button>
+          </div>
+      </div>
+    </div>
+
+    <div id="menu" class="menu-container">
+      <div class="menu-popup">
+        
+        <div id="mainMenuControls">
+          <h1>AQTEN</h1>
+          <button id="playBtn" disabled>Loading...</button>
+          <button id="caseHistoryBtn">Case History</button>
+          <button id="leaderboardBtn">Leaderboard</button>          
+          <button id="settingsBtn">Settings</button>
+
+        </div>
+
+        <div id="loginControls" class="hidden">
+          <div id="loginFormContainer">
+            <h1>Log In</h1>
+            <form id="loginForm">
+              <input type="text" id="loginUsernameInput" placeholder="Enter username" required autocomplete="off">
+              <input type="password" id="loginPasswordInput" placeholder="Enter password" required autocomplete="off">
+              <button type="submit" id="loginBtn">Log In</button>
+              <button type="button" id="backToMenuFromLoginBtn" class="secondary-btn">Back</button>
+            </form>
+            <p>Don't have an account? <a href="#" id="showRegisterBtn">Register</a></p>
+            <p id="loginError" class="error-message hidden">Invalid username or password.</p>
+          </div>
+
+          <div id="registerFormContainer" class="hidden">
+            <h1>Register</h1>
+            <form id="registerForm">
+              <input type="text" id="registerUsernameInput" placeholder="Choose username" required minlength="3" autocomplete="off">
+              <input type="password" id="registerPasswordInput" placeholder="Choose password" required minlength="6" autocomplete="off">
+              <button type="submit" id="registerBtn">Register</button>
+              <button type="button" id="backToLoginBtn" class="secondary-btn">Back to Login</button>
+            </form>
+            <p id="registerError" class="error-message hidden">Username is already taken.</p>
+            <p id="registerSuccess" class="success-message hidden">Registration successful! Please log in.</p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  <div id="leaderboardModal" class="modal-backdrop">
+    <div class="modal-content large-modal">
+        <div class="modal-header">
+            <h2>Leaderboard</h2>
+            <button id="closeLeaderboardBtn" class="btn-close">×</button>
+        </div>
+        <div class="modal-body">
+            <div id="leaderboardContent" class="history-container">
+                <!-- Leaderboard table will be rendered here -->
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button id="backToMenuFromLeaderboardBtn" class="btn-secondary">Back to Menu</button>
+        </div>
+    </div>
+  </div>
+
+  <div id="settingsModal" class="modal-backdrop">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Settings</h2>
+            <button id="closeSettingsBtn" class="btn-close">×</button>
+        </div>
+        <div class="modal-body">
+            <div class="settings-item">
+                <label for="showOnLeaderboardCheckbox">Show my name on the leaderboard</label>
+                <input type="checkbox" id="showOnLeaderboardCheckbox">
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button id="saveSettingsBtn" class="btn-action-final">Save</button>
+        </div>
+    </div>
+  </div>
+
+  <div id="caseHistoryModal" class="modal-backdrop">
+    <div class="modal-content large-modal">
+        <div class="modal-header">
+            <h2>Your Case History</h2>
+            <button id="closeHistoryBtn" class="btn-close">×</button>
+        </div>
+        <div class="modal-body">
+            <div id="caseHistoryContent" class="history-container">
+                <!-- History items will be rendered here -->
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button id="backToMenuFromHistoryBtn" class="btn-secondary">Back to Menu</button>
+        </div>
+    </div>
+  </div>
+
+  <div id="vitalsPopup">
+    <div id="vitalsHeader">
+      <h3 id="vitalsTitle">Patient Vitals</h3>
+    </div>
+
+    <div id="vitalsBody">
+      <div class="accordion">
+        <button class="accordion-header">Vital Signs</button>
+        <div class="accordion-content" id="vitalsContent"></div>
+      </div>
+
+      <div class="accordion">
+        <button class="accordion-header">Physical Exam</button>
+        <div class="accordion-content" id="physExamContent"></div>
+      </div>
+      
+      <div class="accordion">
+        <button class="accordion-header">Lab Results</button>
+        <div class="accordion-content" id="labResultsContent"></div>
+      </div>
+
+      <div class="accordion">
+        <button class="accordion-header">Bedside Tests</button>
+        <div class="accordion-content" id="bedsideTestContent"></div>
+      </div>
+
+      <div class="accordion">
+        <button class="accordion-header">Radiology Results</button>
+        <div class="accordion-content" id="radiologyResultsContent"></div>
+      </div>
+
+      <div class="accordion">
+        <button class="accordion-header">Administered Meds</button>
+        <div class="accordion-content" id="administeredMedsContent"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="oxygenModal" class="modal-backdrop">
+    <div class="modal-content">
+      <h3>Administer Oxygen</h3>
+      <p>Set the flow rate (L/min):</p>
+      
+      <div class="slider-container">
+        <div class="slider-wrapper">
+          <input type="range" id="oxygenSlider" min="0" max="15" value="0" step="1">
+          <div id="slider-ticks">
+            <span></span><span></span><span></span><span></span>
+            <span></span><span></span><span></span><span></span>
+            <span></span><span></span><span></span><span></span>
+            <span></span><span></span><span></span><span></span>
+          </div>
+        </div>
+        <span id="oxygenFlowRateLabel">0 L</span>
+      </div>
+      
+      <div class="disposition-choices">
+        <button id="btnConfirmOxygen">Confirm</button>
+        <button id="btnCancelOxygen">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+
+<!-- Sidebar panel -->
+  <div id="infoPanel">
+    <h2 id="infoName">Patient</h2>
+    <div id="infoDetails"></div>
+    <button id="closeInfo">Close</button>
+  </div>
+
+  <div id="roomMenu">
+    <h2>Patient Actions</h2>
+    <input type="search" id="generalSearchInput" class="submenu-search-input" placeholder="Search all actions..." autocomplete="off">
+    <button id="btnAnamnesis">Anamnesis</button>
+    <button id="btnPhysical">Physical Exam</button>
+    <button id="btnBedside">Bedside Tests</button>
+    <button id="btnLab">Lab Tests</button>
+    <button id="btnRadiology">Radiology</button>
+    <button id="btnMeds">Medication</button>
+    <button id="btnHomeMeds">Läkemedelslista</button>
+    <button id="btnDischarge" class="btn-action-final">Disposition</button> </div>
+
+  </div>
+
+  <div id="homeMedicationModal" class="modal-backdrop">
+    <div class="modal-content large-modal">
+        <div class="modal-header">
+            <h2>Läkemedelslista</h2>
+            <button id="closeHomeMedsModal" class="btn-close">×</button>
+        </div>
+        <div class="modal-body" id="homeMedicationContent">
+            <!-- The home medication list will be rendered here -->
+        </div>
+    </div>
+  </div>
+
+  <div id="generalSearchMenu" class="submenu">
+    <h4>Search Results</h4>
+    <div id="generalSearchResultList">
+      <!-- Search results will be rendered here -->
+    </div>
+  </div>
+
+  <div id="physicalExamMenu" class="submenu">
+    <h4>Physical Exam</h4>
+    <div id="physicalExamList"> 
+      </div>
+  </div>
+
+  <div id="labMenu" class="submenu">
+    <h4>Lab Tests</h4>
+    <input type="search" id="labSearchInput" class="submenu-search-input" placeholder="Search for a test..." autocomplete="off">
+    <div id="labTestList">
+      </div>
+  </div>
+
+  <div id="medsMenu" class="submenu">
+    <h4>Administer Medication</h4>
+    <input type="search" id="medsSearchInput" class="submenu-search-input" placeholder="Search for a medication..." autocomplete="off">
+    <div id="medsList">
+      <!-- Medication buttons will be generated here later -->
+    </div>
+  </div>
+
+  <div id="bedsideMenu" class="submenu">
+    <h4>Bedside Tests</h4>
+    <div id="bedsideTestList">
+      </div>
+  </div>
+
+  <div id="radiologyMenu" class="submenu">
+    <h4>Radiology Orders</h4>
+    <div id="radiologyTestList">
+      </div>
+  </div>
+
+  <div id="chatWindow" class="submenu">
+    <h4>Anamnesis</h4>
+    <div id="chatMessages"></div>
+    <div class="chat-input-area">
+      <input id="chatInput" type="text" placeholder="Ask the patient..." autocomplete="off">
+      <button id="sendBtn">Send</button>
+    </div>
+  </div>
+
+  <div id="dosingModal" class="modal-backdrop">
+    <div class="modal-content">
+        <h3 id="dosingMedName">Set Dose</h3>
+        
+        <div id="doseChoices" class="dose-choices-grid"></div>
+
+        <div id="manualDoseContainer" style="display: none;">
+            <input type="number" id="doseInput" class="dose-input" autocomplete="off">
+            <span id="doseUnitSpan"></span>
+        </div>
+
+        <div id="doseConfirmControls" class="modal-footer" style="display: none;">
+            <button id="btnConfirmDose" class="btn">Confirm</button>
+            <button id="btnCancelDose" class="btn-secondary">Cancel</button>
+        </div>
+    </div>
+  </div>
+
+  <div id="dispositionModal" class="modal-backdrop">
+    <div class="modal-content">
+      <h3>Select Disposition</h3>
+      <p>Where will you send the patient?</p>
+      <div class="disposition-choices">
+        <button id="btnSendHome">Send Home</button>
+        <button id="btnAdmitWard">Admit to Ward</button>
+        <button id="btnTransferPCI">Transfer to PCI</button>
+      </div>
+      <button id="btnCancelDisposition" style="background: #555; margin-top: 15px;">Cancel</button>
+    </div>
+  </div>
+
+  <div id="diagnosisModal" class="modal-backdrop">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Select Final Diagnosis</h2>
+            <button id="btnCancelDiagnosis" class="btn-close">×</button>
+        </div>
+        <div class="modal-body">
+            <input type="text" id="diagnosisSearchInput" class="search-input" placeholder="Search diagnoses..." autocomplete="off">
+            <div id="diagnosisSelectionList" class="menu-button-grid">
+                </div>
+        </div>
+        <div class="modal-footer">
+            <!-- This is the new button -->
+            <button id="btnSkipDiagnosis" class="btn-secondary">Continue without Diagnosis</button>
+        </div>
+    </div>
+  </div>
+
+  <div id="feedbackModal" class="modal-backdrop">
+    <div class="modal-content">
+                <div class="modal-header">
+            <h2>Case Report</h2>
+            <span id="closeFeedback" class="close-button">&times;</span>
+        </div>
+
+        <div class="feedback-summary">
+            <div class="score-circle-container">
+                <div id="scoreCircle" class="score-circle">
+                    <span id="finalScore">0%</span>
+                </div>
+            </div>
+            <div id="correctDiagnosisDisplay" class="diagnosis-display">
+                Diagnosis: <span></span>
+            </div>
+        </div>
+
+        <div class="feedback-tabs">
+            <button class="tab-link active" data-tab="utredning">Utredning</button>
+            <button class="tab-link" data-tab="åtgärder">Åtgärder</button>
+            <button class="tab-link" data-tab="fallbeskrivning">fallbeskrivning</button>
+        </div>
+
+        <div class="feedback-content-container">
+            <div id="fallbeskrivning" class="tab-content"></div>
+            <div id="utredning" class="tab-content active"></div>
+            <div id="åtgärder" class="tab-content"></div>
+        </div>
+    </div>
+  </div>
+
+  <div id="prescriptionModal" class="modal-backdrop">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Assign Prescriptions</h2>
+            <button id="btnCancelPrescription" class="btn-close">×</button>
+        </div>
+        <div class="modal-body">
+            <input type="text" id="prescriptionSearchInput" class="search-input" placeholder="Search prescriptions..." autocomplete="off">
+            <div id="prescriptionSelectionList" class="menu-button-grid checkbox-grid">
+                <!-- Prescription checkboxes will be rendered here -->
+            </div>
+            <div id="selectedPrescriptionsContainer">
+                <h6>Selected:</h6>
+                <div id="selectedPrescriptionsList">
+                    <p class="no-items-message">No prescriptions selected.</p>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button id="btnConfirmPrescription" class="btn-action-final">Confirm & Discharge</button>
+        </div>
+    </div>
+  </div>
+
+  <div id="admissionPlanModal" class="modal-backdrop">
+    <div class="modal-content large-modal">
+
+      <div class="modal-header">
+        <h2>Plan för inskrivning</h2>
+        <button id="btnCancelAdmissionPlan" class="btn-close">×</button>
+      </div>
+
+      <div class="modal-body">
+        <h4>Mediciner närmsta dygnet</h4>
+        <div id="planMedicationOrdersList"></div>
+        <div class="add-med-container" style="margin-top: 10px;">
+          <button id="btnAddPlanMed" class="btn btn-secondary">Lägg till medicin</button></div>
+      <hr>
+        <h4>Övervakning och omvårdnad</h4>
+        <label for="planVitalsFreq">NEWS:</label>
+        <div id="planVitalsFreq" class="button-group">
+          <button class="btn-toggle active" data-value="none">Aldrig</button>
+          <button class="btn-toggle" data-value="8h">Varje 8h</button>
+          <button class="btn-toggle" data-value="4h">Varje 4h</button>
+          <button class="btn-toggle" data-value="2h">Varje 2h</button>
+          <button class="btn-toggle" data-value="2h">Varje 1h</button>
+        </div>
+
+        <div class="button-toggle-group">
+         <button class="btn-toggle" id="planFasta">Fasta</button>          
+          <button class="btn-toggle" id="planUrineOutput">Vätske- och urinmätning</button>
+          <button class="btn-toggle" id="planDailyWeight">Daglig vikt</button>
+          <button class="btn-toggle" id="planGlucoseCurve">Glukoskurva</button>
+          <button class="btn-toggle" id="planSurgeryNotification">Operationsanmälan</button>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <div class="disposition-choices">
+         <button id="btnConfirmAdmissionPlan" class="btn-action-final">Confirm Admission & Plan</button>
+         <button id="btnFooterCancelAdmissionPlan">Cancel</button> 
+         </div>
+      </div>
+  </div>
+</div>
+
+<div id="addPlanMedModal" class="modal-backdrop">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Select Medication to Add</h2>
+            <button id="btnCancelAddPlanMed" class="btn-close">×</button>
+        </div>
+        <div class="modal-body">
+            <input type="text" id="planMedSearchInput" class="search-input" placeholder="Search medications..." autocomplete="off">
+            <div id="planMedSelectionList" class="menu-button-grid">
+                </div>
+        </div>
+    </div>
+</div>
+
+  <div id="ekgModal" class="modal-backdrop">
+    <div class="modal-content large-modal">
+      <button id="closeEkgModal" title="Close EKG">×</button>
+      <h3>EKG Analysis</h3>
+      <div id="ekgImageContainer">
+        <img id="ekgImage" src="" alt="Patient EKG" />
+      </div>
+      <div id="ekgInterpretation" style="display: none; margin-top: 15px; border-top: 1px solid #555; padding-top: 15px;">
+        <h4>Official Interpretation:</h4>
+        <p id="ekgInterpretationText"></p>
+      </div>
+      <button id="showEkgInterpretationBtn">Show Interpretation</button>
+    </div>
+  </div>
+
+  <div id="failureModal" class="modal-backdrop">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="failureTitle">Case Lost</h3>
+      </div>
+      <div class="modal-body">
+        <p id="failureMessage">The patient's condition deteriorated beyond recovery due to critical vital signs being unstable for too long.</p>
+      </div>
+      <div class="modal-footer">
+        <button id="btnReturnToMenu">Return to Main Menu</button>
+      </div>
+    </div>
+  </div>
+
+  <button id="logoutBtn" class="hidden">Logout</button>
+
+  <div id="critical-warning-overlay" class="hidden"></div>
+  
+
+
+    <script src="js/main.js" type="module"></script>
+
+
+  </body>
+</html>
