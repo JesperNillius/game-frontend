@@ -1,4 +1,5 @@
 // Element selectors
+import { API_URL } from './api.js';
 const vitalsPopup = document.getElementById('vitalsPopup');
 const vitalsTitle = document.getElementById('vitalsTitle');
 const vitalsContent = document.getElementById('vitalsContent');
@@ -575,11 +576,14 @@ export function renderCheckboxButtons(items, containerId, selectedIdsSet) {
     }
 
     items.forEach(item => {
+        const checkboxId = `prescription-checkbox-${item.id}`;
         const label = document.createElement('label');
         label.className = 'checkbox-label';
+        label.setAttribute('for', checkboxId);
 
         const checkbox = document.createElement('input');
         checkbox.type = 'checkbox';
+        checkbox.id = checkboxId;
         checkbox.dataset.id = item.id;
         if (selectedIdsSet.has(item.id)) {
             checkbox.checked = true;
@@ -796,17 +800,19 @@ export function renderCaseHistory(history, getActionName, getActionCategory) {
         mainRow.innerHTML = `
             <td>
                 <div class="history-patient-cell">
-                    <img src="/images/${item.patientAvatar || 'patient.png'}" class="history-patient-icon" alt="Patient Icon">
+                    <img src="${API_URL}/images/${item.patientAvatar || 'patient.png'}" class="history-patient-icon" alt="Patient Icon">
                     <span>${item.patientName}, ${item.patientAge}</span>
                 </div>
             </td>
             <td>${item.contactReason}</td>
             <td>${item.finalDiagnosis}</td>
-            <td class="score-cell">
-                <div class="score-circle-small" style="--score-percent: ${item.score}%; --bad-score-color: ${getScoreColor(item.score)};">
-                    <span>${item.score}</span>
+            <td>
+                <div class="score-cell-content">
+                    <div class="score-circle-small" style="--score-percent: ${item.score}%; --bad-score-color: ${getScoreColor(item.score)};">
+                        <span>${item.score}</span>
+                    </div>
+                    <span>${item.score}%</span>
                 </div>
-                <span>${item.score}%</span>
             </td>
         `;
         tbody.appendChild(mainRow);

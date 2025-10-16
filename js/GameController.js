@@ -47,6 +47,7 @@ export default class Game {
         this.medicationContext = null; 
         this.allDiagnoses = [];
         this.selectedPrescriptions = new Set();
+        this.caseHasBeenRated = false; // New flag for rating logic
         
         // --- Hospital Layout Data ---
         this.rooms = [
@@ -208,6 +209,9 @@ export default class Game {
         // 1. Initial page setup
         canvas.resizeCanvas();
         window.addEventListener('resize', canvas.resizeCanvas);
+
+        // Dynamically set the favicon URL
+        document.getElementById('favicon').href = `${API_URL}/favicon.ico`;
         
         document.getElementById("playBtn").disabled = true;
         document.getElementById("playBtn").textContent = "Loading...";
@@ -221,8 +225,26 @@ export default class Game {
             // No user is logged in, do nothing.
             this.updateUserUI(null);
         }
+        
+        // 2. Load all game data (actions, meds, etc.)
+        try {
+            const data = await api.getGameData();
+            this.allLabTests = data.labTests;
+            this.allLabKits = data.labKits;
+            this.allBedsideTests = data.bedsideTests;
+            this.allMedications = data.medications;
+            this.allRadiologyTests = data.radiologyTests;
+            this.standardFindings = data.standardFindings;
+            this.allPhysicalExams = data.physicalExams;
+            this.allPrescriptions = data.allPrescriptions;
+            this.allDiagnoses = data.allDiagnoses;
+        } catch (error) {
+            console.error("Failed to load critical game data:", error);
+            document.getElementById("playBtn").textContent = "Data Error";
+            return; // Stop initialization if data fails to load
+        }
 
-        // 2. Load initial image assets
+        // 3. Load initial image assets
         try {
             await this.loadInitialAssets();
             document.getElementById("playBtn").disabled = false;
@@ -232,7 +254,7 @@ export default class Game {
             document.getElementById("playBtn").textContent = "Error";
         }
         
-        // 3. Start the main render loop
+        // 4. Start the main render loop
         canvas.renderLoop(this.camera, [
             () => this.drawGameWorld(),
             () => canvas.drawPatients(this.patients)
@@ -306,19 +328,6 @@ export default class Game {
         ui.hideAllSideMenus();
         this.stopVitalsPolling(); // This will also become a method of the Game class
 
-        const data = await api.getGameData();
-
-        this.allLabTests = data.labTests;
-        this.allLabKits = data.labKits;
-        console.log('--- Lab Kits received by Frontend: ---', this.allLabKits); // Add this line
-        this.allBedsideTests = data.bedsideTests;
-        this.allMedications = data.medications;
-        this.allRadiologyTests = data.radiologyTests;
-        this.standardFindings = data.standardFindings;
-        this.allPhysicalExams = data.physicalExams;
-        this.allPrescriptions = data.allPrescriptions;
-        this.allDiagnoses = data.allDiagnoses;
-
         // Calls to other game logic functions also use 'this.'
         this.spawnTimer = setInterval(() => this.spawnPatient(), 15000);
         this.spawnPatient();
@@ -364,6 +373,9 @@ export default class Game {
 
         const result = await api.evaluateCase(performanceData);
         
+        // Store whether the case has been rated before to adjust UI flow
+        this.caseHasBeenRated = result.hasBeenRatedBefore || false;
+
         ui.showFeedbackReport(result);
 
     } catch (err) {
@@ -1761,6 +1773,29 @@ export default class Game {
     utils.animateZoom(this.camera, canvas.worldWidth / 2, canvas.worldHeight / 2, 1.0);
     ui.hideAllSideMenus();
     this.stopVitalsPolling();
+    }
+
+    showRatingModal() {
+        // Hide the feedback report and show the rating modal
+        document.getElementById('feedbackModal').classList.remove('visible');
+        document.getElementById('ratingModal').classList.add('visible');
+    }
+
+    async submitCaseRating(rating, feedbackText) {
+        if (!this.currentPatientId) return;
+
+        try {
+            // Call the new API endpoint to save the rating
+            await api.rateCase(this.currentPatientId, rating, feedbackText);
+        } catch (error) {
+            console.error("Failed to submit case rating:", error);
+            // We still proceed with closing, as this is not a critical failure for the user.
+        }
+
+        // Hide the rating modal
+        document.getElementById('ratingModal').classList.remove('visible');
+        // Perform the same cleanup as closing the feedback report
+        this.closeFeedbackReport();
     }
 
     // HELPER FUNCTIONS

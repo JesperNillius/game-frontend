@@ -281,6 +281,52 @@ export default class InputHandler {
 
         //Feedback
         document.getElementById('closeFeedback').addEventListener('click', () => this.game.closeFeedbackReport());
+        document.getElementById('btnFinishFeedback').addEventListener('click', () => {
+            if (this.game.caseHasBeenRated) {
+                this.game.closeFeedbackReport(); // Skip rating if already rated
+            } else {
+                this.game.showRatingModal(); // Show rating modal if not rated
+            }
+        });
+
+        // --- Rating Modal Logic ---
+        const starContainer = document.getElementById('starRatingContainer');
+        const submitRatingBtn = document.getElementById('btnSubmitRating');
+
+        document.getElementById('starRatingContainer').addEventListener('mouseover', (e) => {
+            if (e.target.classList.contains('star')) {
+                starContainer.querySelectorAll('.star').forEach(star => {
+                    star.textContent = star.dataset.value <= e.target.dataset.value ? '★' : '☆';
+                });
+            }
+        });
+        document.getElementById('starRatingContainer').addEventListener('mouseout', () => {
+            const selectedRating = parseInt(starContainer.dataset.rating || 0);
+            starContainer.querySelectorAll('.star').forEach(star => {
+                star.textContent = star.dataset.value <= selectedRating ? '★' : '☆';
+            });
+        });
+        document.getElementById('starRatingContainer').addEventListener('click', (e) => {
+            if (e.target.classList.contains('star')) {
+                const rating = parseInt(e.target.dataset.value, 10);
+                starContainer.dataset.rating = rating; // Store the selected rating
+                submitRatingBtn.disabled = false; // Enable the submit button
+                // Make the selection "stick" visually
+                starContainer.querySelectorAll('.star').forEach(star => {
+                    star.classList.toggle('selected', star.dataset.value <= rating);
+                });
+            }
+        });
+        submitRatingBtn.addEventListener('click', () => {
+            const rating = parseInt(starContainer.dataset.rating);
+            const feedbackText = document.getElementById('ratingFeedbackText').value;
+            this.game.submitCaseRating(rating, feedbackText);
+        });
+        document.getElementById('btnSkipRating').addEventListener('click', () => {
+            // Hide the rating modal first, then close the report
+            document.getElementById('ratingModal').classList.remove('visible');
+            this.game.closeFeedbackReport(); // Skip rating and just close
+        });
         document.getElementById('btnCancelDisposition').addEventListener('click', () => ui.hideDispositionModal());
         document.querySelector('.feedback-tabs').addEventListener('click', (e) => {
             if (e.target.matches('.tab-link')) {

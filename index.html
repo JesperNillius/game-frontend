@@ -7,6 +7,9 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    
+    <!-- The favicon link will be set dynamically by JavaScript -->
+    <link id="favicon" rel="icon" href="#" type="image/x-icon">
     <link rel="stylesheet" href="style.css">
 
   </head>
@@ -348,6 +351,9 @@
             <div id="utredning" class="tab-content active"></div>
             <div id="åtgärder" class="tab-content"></div>
         </div>
+        <div class="modal-footer">
+            <button id="btnFinishFeedback" class="btn-action-final">Done</button>
+        </div>
     </div>
   </div>
 
@@ -386,18 +392,19 @@
       <div class="modal-body">
         <h4>Mediciner närmsta dygnet</h4>
         <div id="planMedicationOrdersList"></div>
-        <div class="add-med-container" style="margin-top: 10px;">
-          <button id="btnAddPlanMed" class="btn btn-secondary">Lägg till medicin</button></div>
-      <hr>
+        <div class="add-med-container" style="margin-top: 10px;"> <button id="btnAddPlanMed" class="btn btn-secondary">Lägg till medicin</button></div>
+        <hr>
         <h4>Övervakning och omvårdnad</h4>
-        <label for="planVitalsFreq">NEWS:</label>
-        <div id="planVitalsFreq" class="button-group">
-          <button class="btn-toggle active" data-value="none">Aldrig</button>
-          <button class="btn-toggle" data-value="8h">Varje 8h</button>
-          <button class="btn-toggle" data-value="4h">Varje 4h</button>
-          <button class="btn-toggle" data-value="2h">Varje 2h</button>
-          <button class="btn-toggle" data-value="2h">Varje 1h</button>
-        </div>
+        <fieldset class="plan-fieldset">
+          <legend class="plan-legend">NEWS:</legend>
+          <div id="planVitalsFreq" class="button-group">
+            <button class="btn-toggle active" data-value="none">Aldrig</button>
+            <button class="btn-toggle" data-value="8h">Varje 8h</button>
+            <button class="btn-toggle" data-value="4h">Varje 4h</button>
+            <button class="btn-toggle" data-value="2h">Varje 2h</button>
+            <button class="btn-toggle" data-value="1h">Varje 1h</button>
+          </div>
+        </fieldset>
 
         <div class="button-toggle-group">
          <button class="btn-toggle" id="planFasta">Fasta</button>          
@@ -457,6 +464,29 @@
       <div class="modal-footer">
         <button id="btnReturnToMenu">Return to Main Menu</button>
       </div>
+    </div>
+  </div>
+
+  <div id="ratingModal" class="modal-backdrop">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Rate this Case</h2>
+        </div>
+        <div class="modal-body">
+            <p>How would you rate the quality and educational value of this case?</p>
+            <div id="starRatingContainer" class="star-rating-container">
+                <span class="star" data-value="1">☆</span>
+                <span class="star" data-value="2">☆</span>
+                <span class="star" data-value="3">☆</span>
+                <span class="star" data-value="4">☆</span>
+                <span class="star" data-value="5">☆</span>
+            </div>
+            <textarea id="ratingFeedbackText" class="feedback-textarea" placeholder="Optional: Any suggestions or comments..."></textarea>
+        </div>
+        <div class="modal-footer">
+            <button id="btnSubmitRating" class="btn-action-final" disabled>Submit</button>
+            <button id="btnSkipRating" class="btn-secondary">Skip</button>
+        </div>
     </div>
   </div>
 

@@ -1,4 +1,10 @@
-export const API_URL = 'https://aqten-game-backend.onrender.com';
+const IS_LIVE = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
+
+// The backend URL from your Render environment variables.
+// ✅ Replace this placeholder with your actual backend URL from Render.
+const LIVE_API_URL = 'https://aqten-backend.onrender.com'; // Example URL
+const LOCAL_API_URL = 'http://localhost:3000';
+export const API_URL = IS_LIVE ? LIVE_API_URL : LOCAL_API_URL;
 
 // --- Auth Endpoints ---
 export async function registerUser(username, password) {
@@ -184,5 +190,18 @@ export async function orderLabKit(patientId, kitId) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ kitId })
     });
+    return response.json();
+}
+
+export async function rateCase(caseId, rating, feedbackText) {
+    const response = await fetch(`${API_URL}/api/rate-case`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ caseId, rating, feedback: feedbackText }),
+        credentials: 'include'
+    });
+    if (!response.ok) {
+        throw new Error('Could not submit rating.');
+    }
     return response.json();
 }

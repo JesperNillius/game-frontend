@@ -416,7 +416,7 @@
 }
 
 .btn-action-final {
-  margin-top: 20px !important;
+  /* margin-top: 20px !important; */ /* This was causing alignment issues in flex containers */
   background-color: #2c6e3b !important; /* A calm green */
 }
 .btn-action-final:hover {
@@ -1298,6 +1298,7 @@
 .modal-footer {
     display: flex;
     justify-content: center; /* This is the key property to center the buttons */
+    align-items: center; /* This will vertically align the buttons */
     gap: 15px;               /* Adds some space between the buttons */
     margin-top: 25px;        /* Adds space above the buttons */
     padding-top: 15px;       /* Adds space above the buttons inside the border */
@@ -1429,6 +1430,20 @@
     background-color: #2274A5; /* Active/selected style */
     color: #fff;
     border-color: #2274A5;
+}
+
+/* --- Fieldset and Legend for Accessibility --- */
+.plan-fieldset {
+    border: none;
+    padding: 0;
+    margin: 10px 0 0 0;
+}
+
+.plan-legend {
+    padding: 0;
+    font-size: 14px;
+    color: #aaa;
+    margin-bottom: 5px;
 }
 /* --- Styles for the Disposition Modal --- */
 
@@ -1946,7 +1961,7 @@
     background-color: #444;
 }
 
-.history-table .score-cell {
+.score-cell-content {
     display: flex;
     align-items: center;
     justify-content: flex-end;
@@ -2127,4 +2142,50 @@
 
 .btn-undo:hover {
     background-color: #5a6268 !important; /* A darker gray for hover */
+}
+
+/* --- Feedback Textarea --- */
+.feedback-textarea {
+    width: 100%;
+    min-height: 80px;
+    margin-top: 20px;
+    padding: 10px;
+    background-color: #1c1c1e;
+    border: 1px solid #444;
+    border-radius: 6px;
+    color: #fff;
+}
+
+/* --- Star Rating Modal --- */
+.star-rating-container {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    font-size: 48px; /* Large stars */
+    margin-top: 20px;
+    color: #888; /* Default empty star color */
+}
+
+.star {
+    cursor: pointer;
+    transition: color 0.2s ease, transform 0.2s ease;
+}
+
+/* Style for stars when the container is hovered over */
+.star-rating-container:hover .star {
+    color: #FFC107; /* Yellow color for potential rating */
+}
+
+/* Style for stars that are "before" the one you are hovering on */
+.star-rating-container .star:hover ~ .star {
+    color: #888; /* Reset stars after the hovered one to empty */
+}
+
+.star.selected,
+.star-rating-container .star.selected ~ .star {
+    color: #FFC107;
+}
+
+.star:hover {
+    transform: scale(1.2); /* Make the hovered star slightly larger */
 }
