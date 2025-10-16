@@ -19,6 +19,7 @@ export default class Game {
     constructor() {
         // --- Game State Variables ---
         this.patients = [];
+        this.parents = []; // To store parent characters
         this.currentPatientId = null;
         this.draggingPatient = null;
         this.selectedPatient = null;
@@ -257,7 +258,10 @@ export default class Game {
         // 4. Start the main render loop
         canvas.renderLoop(this.camera, [
             () => this.drawGameWorld(),
-            () => canvas.drawPatients(this.patients)
+            () => this.drawCharacterShadows(),
+            () => this.drawParents(),
+            () => this.updateParents(),            
+            () => canvas.drawPatients(this.patients),
         ]);
     }
         
@@ -278,6 +282,82 @@ export default class Game {
     ui.updateCriticalWarning(anyPatientCritical); // Call the function from ui.js
     }
 
+    drawCharacterShadows() {
+        const ctx = canvas.ctx;
+        const shadowOffsetX = 4;
+        const shadowOffsetY = 4;
+
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.2)'; // A subtle shadow color
+
+        // Draw shadows for patients
+        for (const patient of this.patients) {
+            ctx.beginPath();
+            // Make the shadow circular and slightly larger than the character's base radius
+            const shadowRadius = patient.radius * 1.7;
+            ctx.arc(patient.x + shadowOffsetX, patient.y + shadowOffsetY, shadowRadius, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        // Draw shadows for parents
+        for (const parent of this.parents) {
+            ctx.beginPath();
+            const shadowRadius = 14 * 1.1; // Use a fixed radius, slightly larger
+            ctx.arc(parent.x + shadowOffsetX, parent.y + shadowOffsetY, shadowRadius, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
+
+    updateParents() {
+        const followDistance = 55; // How far the parent stays from the child
+        for (const parent of this.parents) {
+            const child = this.patients.find(p => p.id === parent.childId);
+            if (child) {
+                const oldX = parent.x;
+                const oldY = parent.y;
+
+                // Set the parent's target position to be top-left of the child
+                const offset = followDistance * 0.707; // ~1/sqrt(2) for diagonal distance
+                const targetX = child.x - offset;
+                const targetY = child.y - offset;
+
+                // Simple easing to make the movement smooth
+                parent.x += (targetX - parent.x) * 0.1;
+                parent.y += (targetY - parent.y) * 0.1;
+
+                // Calculate rotation based on movement
+                const dx = parent.x - oldX;
+                const dy = parent.y - oldY;
+                if (Math.hypot(dx, dy) > 0.1) { // Only update rotation if moving
+                    parent.rotation = Math.atan2(dy, dx) + Math.PI / 2;
+                }
+            }
+        }
+    }
+
+    drawParents() {
+        const ctx = canvas.ctx;
+        for (const parent of this.parents) {
+            if (parent.img) {
+                const size = 14 * 4.0; // Match patient size
+
+                ctx.save();
+                ctx.translate(parent.x, parent.y);
+
+                // Draw the name tag above the parent
+                if (parent.name) {
+                    ctx.fillStyle = "#fff";
+                    ctx.font = "13px Arial";
+                    ctx.textAlign = "center";
+                    ctx.fillText(`${parent.name} (Parent)`, 0, -size / 2 - 5);
+                }
+
+                ctx.rotate(parent.rotation || 0);
+                ctx.drawImage(parent.img, -size / 2, -size / 2, size, size);
+                ctx.restore();
+            }
+        }
+    }
+
     async loadInitialAssets() {
         try {
             const [kruka2, kruka, chair_to_right, chair_to_left, patientBed, skrivbord, tree1, treesnroads] = await Promise.all([
@@ -289,7 +369,7 @@ export default class Game {
                 utils.loadImage(`${API_URL}/images/patient_bed.png`),
                 utils.loadImage(`${API_URL}/images/skrivbord.png`),
                 utils.loadImage(`${API_URL}/images/tree1.png`),
-                utils.loadImage(`${API_URL}/images/treesnroads.png`),
+                utils.loadImage(`${API_URL}/images/treesnroads.png`)
             ]);
             this.images = { kruka2, kruka, chair_to_right, chair_to_left, patientBed, skrivbord, tree1, treesnroads };
         } catch (error) {
@@ -322,6 +402,7 @@ export default class Game {
         if (this.spawnTimer) clearInterval(this.spawnTimer);
         this.spawnTimer = null;
         this.patients = [];
+        this.parents = []; // Also clear parents when starting a new game
 
         // Helper functions are called from their modules
         utils.animateZoom(this.camera, canvas.worldWidth / 2, canvas.worldHeight / 2, 1.0);
@@ -493,12 +574,18 @@ export default class Game {
         const x = spawnRoom.x + pad + Math.random() * (spawnRoom.w - pad * 2);
         const y = spawnRoom.y + pad + Math.random() * (spawnRoom.h - pad * 2);
 
+        // Destructure both 'radius' and 'Radius' out of patientData to prevent overwriting the default
+        const { radius, Radius, ...restOfPatientData } = patientData;
+
+        // Assign a smaller radius for pediatric patients
+        const isChild = patientData.age < 18;
+
         const newPatient = {
-            x, y, radius: 14, color: "red",
+            x, y, radius: isChild ? 12 : 14, color: "red",
             actionsTaken: [],
             assignedRoom: null,
             rotation: 0,
-            ...patientData,
+            ...restOfPatientData,
             currentVitals: { // Initialize vitals
                 AF: patientData.AF,
                 Saturation: patientData.Saturation,
@@ -518,13 +605,32 @@ export default class Game {
             }
         };
 
+        // Wait for the image to load before adding the patient to the game
         if (newPatient.patient_avatar) {
-        newPatient.img = new Image();
-        newPatient.img.src = `${API_URL}/images/${newPatient.patient_avatar}`;
+            newPatient.img = await utils.loadImage(`${API_URL}/images/${newPatient.patient_avatar}`);
         }
 
+        // Now that the image is loaded, add the patient to be rendered
         this.patients.push(newPatient);
         console.log("Spawned new patient:", newPatient);
+
+        // If the patient is a child and has a parent avatar specified, spawn a parent for them
+        if (patientData.age < 18 && patientData.parent_avatar) {
+            try {
+                const parentImg = await utils.loadImage(`${API_URL}/images/${patientData.parent_avatar}`);
+                const parent = {
+                    x: newPatient.x - 20,
+                    y: newPatient.y,
+                    img: parentImg,
+                    childId: newPatient.id,
+                    rotation: 0, // Add initial rotation
+                    name: patientData.ParentName // Store the parent's name
+                };
+                this.parents.push(parent);
+            } catch (error) {
+                console.error(`Failed to load parent avatar image: ${patientData.parent_avatar}`, error);
+            }
+        }
 
     } catch (err) {
         console.error("Error in spawnPatient function:", err);

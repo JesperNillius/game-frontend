@@ -119,7 +119,7 @@ export function drawPatients(patients) {
           ctx.arc(p.x, p.y, glowRadius, 0, Math.PI * 2);
           ctx.fill();
       }
-      const size = p.radius * 4.0;
+      const size = p.radius * 3.8;
       ctx.save();
       ctx.translate(p.x, p.y);
       ctx.rotate(p.rotation);
