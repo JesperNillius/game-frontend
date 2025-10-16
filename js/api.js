@@ -2,7 +2,7 @@ const IS_LIVE = window.location.hostname !== 'localhost' && window.location.host
 
 // The backend URL from your Render environment variables.
 // ✅ Replace this placeholder with your actual backend URL from Render.
-const LIVE_API_URL = 'https://aqten-backend.onrender.com'; // Example URL
+const LIVE_API_URL = 'https://aqten-game-backend.onrender.com'; // Example URL
 const LOCAL_API_URL = 'http://localhost:3000';
 export const API_URL = IS_LIVE ? LIVE_API_URL : LOCAL_API_URL;
 
