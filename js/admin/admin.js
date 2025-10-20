@@ -1,13 +1,12 @@
 import { renderSelectedActionTags, renderHomeMedList, renderAnamnesisChecklist, populateAdmissionPlanUI, renderAdmissionPlanMeds } from '../common/ui.js';
 import { initActionSelector, openActionSelector } from './actionSelector.js';
 import { initAdmissionPlanManager } from './admissionPlanManager.js';
+import { API_URL as BASE_API_URL } from '../api.js'; // Import the dynamic base URL
 import { initAnamnesisManager } from './anamnesisManager.js';
 import { initHomeMedManager } from './homeMedManager.js';
 import { initPrescriptionManager } from './prescriptionManager.js';
 
-
-
-const API_URL = 'http://localhost:3000/api/admin';
+const API_URL = `${BASE_API_URL}/api/admin`; // Build the correct admin URL
 
 const patientList = document.getElementById('patientList');
 const form = document.getElementById('patientForm');
@@ -529,7 +528,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const errorEl = document.getElementById('adminLoginError');
 
         try {
-            const response = await fetch('/api/auth/login', {
+            const response = await fetch(`${BASE_API_URL}/api/auth/login`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username, password })
