@@ -2731,3 +2731,10 @@
 }
 #patchNotesContent ul { padding-left: 20px; }
 #patchNotesContent code { background-color: #1c1c1e; padding: 2px 5px; border-radius: 4px; }
+
+/* --- iPad Specific Adjustments --- */
+body.ipad #app-container,
+body.ipad #gameCanvas {
+    width: 100vw;
+    height: 100vh;
+}

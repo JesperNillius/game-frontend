@@ -530,6 +530,16 @@
     <!-- The main.js file will now correctly import from the /js/game/ directory -->
     <script src="js/main.js" type="module"></script> 
 
+    <!-- iPad Detection Script -->
+    <script>
+      (function() {
+        const isIpad = /iPad/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+        if (isIpad) {
+          document.body.classList.add('ipad');
+        }
+      })();
+    </script>
+
 
   </body>
 </html>
