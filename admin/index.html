@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel</title>
+    <link rel="stylesheet" href="/admin/admin-style.css"> <!-- Correct, absolute path -->
+</head>
+<body>
+    <div class="admin-container">
+        <div class="admin-sidebar">
+            <h2>Patient Cases</h2>
+            <div id="patientList" class="patient-list-container">
+                <!-- Patient list will be populated here -->
+            </div>
+            <button id="btnNewCase" class="btn">New Case</button> <!-- Will now use the new base .btn style -->
+        </div>
+
+        <div class="admin-main-content">
+            <form id="patientForm">
+                <input type="hidden" id="patientId">
+
+                <div class="form-section">
+                    <h3>Basic Information</h3>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="name">Name</label>
+                            <input type="text" id="name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="age">Age</label>
+                            <input type="number" id="age" step="0.1" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="Kontaktorsak">Kontaktorsak</label>
+                            <input type="text" id="Kontaktorsak">
+                        </div>
+                        <div class="form-group">
+                            <label for="Diagnosis">Correct Diagnosis</label>
+                            <input type="text" id="Diagnosis" required>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h3>Avatars</h3>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Patient Avatar</label>
+                            <div id="patientAvatarDropZone" class="avatar-drop-zone">
+                                <img id="patientAvatarPreview" src="" alt="Avatar Preview" class="hidden">
+                                <span>Click or drag image here</span>
+                                <input type="file" id="patientAvatarFileInput" accept="image/*" class="hidden">
+                            </div>
+                            <button type="button" id="clearPatientAvatar" class="btn-secondary btn-small hidden">Clear</button>
+                        </div>
+                        <div class="form-group">
+                            <label for="parent_avatar">Parent Avatar (if child)</label>
+                            <input type="text" id="parent_avatar" placeholder="e.g., parent_male_1.png">
+                        </div>
+                        <div class="form-group">
+                            <label for="ParentName">Parent Name</label>
+                            <input type="text" id="ParentName" placeholder="e.g., John Doe">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h3>Initial Vitals</h3>
+                    <div class="form-grid">
+                        <div class="form-group"><label for="AF">AF</label><input type="number" id="AF"></div>
+                        <div class="form-group"><label for="Saturation">Saturation</label><input type="number" id="Saturation"></div>
+                        <div class="form-group"><label for="Puls">Puls</label><input type="number" id="Puls"></div>
+                        <div class="form-group"><label for="BT_systolic">BT (Systolic)</label><input type="number" id="BT_systolic"></div>
+                        <div class="form-group"><label for="BT_diastolic">BT (Diastolic)</label><input type="number" id="BT_diastolic"></div>
+                        <div class="form-group"><label for="Temp">Temp</label><input type="number" id="Temp" step="0.1"></div>
+                        <div class="form-group"><label for="RLS">RLS</label><input type="number" id="RLS"></div>
+                        <div class="form-group">
+                            <label for="bladder_volume">Bladder Volume (ml)</label>
+                            <input type="number" id="bladder_volume" placeholder="e.g., 700">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h3>Anamnesis & Home Meds</h3>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="Anamnesis">Anamnesis Prompt (Adult)</label>
+                            <textarea id="Anamnesis" rows="4"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="ChildPrompt">Child Prompt (Pediatric)</label>
+                            <textarea id="ChildPrompt" rows="4"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="ParentPrompt">Parent Prompt (Pediatric)</label>
+                            <textarea id="ParentPrompt" rows="4"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>Anamnesis Checklist</label>
+                            <div id="anamnesisChecklistContainer"></div>
+                            <button type="button" id="btnAddAnamnesisQuestion" class="btn btn-secondary" style="margin-top: 10px;">Add Question</button>
+                            <input type="hidden" id="AnamnesisChecklist">
+                        </div>
+                        <div class="form-group">
+                            <label>Home Medication List (Läkemedelslista)</label>
+                            <div id="homeMedListContainer"></div>
+                            <div class="search-container">
+                                <input type="text" id="homeMedSearchInput" class="search-input" placeholder="Add home medication...">
+                                <div id="homeMedSearchResults" class="search-results"></div>
+                            </div>
+                            <input type="hidden" id="Läkemedelslista">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h3>Abnormal Findings</h3>
+                    <div class="findings-grid">
+                        <div class="findings-column">
+                            <h4>Physical Exam</h4>
+                            <div class="search-container"><input type="text" class="finding-search-input" data-category="Physical Exam" placeholder="Search exams..."><div class="search-results"></div></div>
+                            <div id="abnormalFindingsPhysical Exam" class="findings-container"></div>
+                        </div>
+                        <div class="findings-column">
+                            <h4>Bedside Test</h4>
+                            <div class="search-container"><input type="text" class="finding-search-input" data-category="Bedside Test" placeholder="Search bedside..."><div class="search-results"></div></div>
+                            <div id="abnormalFindingsBedside Test" class="findings-container"></div>
+                        </div>
+                        <div class="findings-column">
+                            <h4>Lab Test</h4>
+                            <div class="search-container"><input type="text" class="finding-search-input" data-category="Lab Test" placeholder="Search labs..."><div class="search-results"></div></div>
+                            <div id="abnormalFindingsLab Test" class="findings-container"></div>
+                        </div>
+                        <div class="findings-column">
+                            <h4>Radiology</h4>
+                            <div class="search-container"><input type="text" class="finding-search-input" data-category="Radiology" placeholder="Search radiology..."><div class="search-results"></div></div>
+                            <div id="abnormalFindingsRadiology" class="findings-container"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h3>Solution Actions</h3>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="ActionsCritical">Critical Actions</label>
+                            <div id="selectedActionsCritical" class="selected-actions-container"></div>
+                            <button type="button" class="btn btn-secondary btn-select-actions" data-target="ActionsCritical">Select Critical Actions</button>
+                            <input type="hidden" id="ActionsCritical">
+                        </div>
+                        <div class="form-group">
+                            <label for="ActionsRecommended">Recommended Actions</label>
+                            <div id="selectedActionsRecommended" class="selected-actions-container"></div>
+                            <button type="button" class="btn btn-secondary btn-select-actions" data-target="ActionsRecommended">Select Recommended Actions</button>
+                            <input type="hidden" id="ActionsRecommended">
+                        </div>
+                        <div class="form-group">
+                            <label for="ActionsContraindicated">Contraindicated Actions</label>
+                            <div id="selectedActionsContraindicated" class="selected-actions-container"></div>
+                            <button type="button" class="btn btn-secondary btn-select-actions" data-target="ActionsContraindicated">Select Contraindicated Actions</button>
+                            <input type="hidden" id="ActionsContraindicated">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h3>Solution Plans</h3>
+                    <div class="form-grid">
+                        <div class="form-grid"> <!-- New wrapper for the top row -->
+                            <div class="form-group">
+                                <label for="DispositionSolution">Correct Disposition</label>
+                                <select id="DispositionSolution">
+                                    <option value="">-- Select Disposition --</option>
+                                    <option value="Home">Send Home</option>
+                                    <option value="Ward">Admit to Ward</option>
+                                    <option value="PCI">Transfer to PCI</option>
+                                    <option value="Trombolys">Thrombolysis</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="PrescriptionsSolution">Prescriptions (if sent home)</label>
+                                <div id="selectedPrescriptionsSolution" class="selected-actions-container"></div>
+                                <button type="button" id="btnSelectPrescriptions" class="btn btn-secondary">Select Prescriptions</button>
+                                <input type="hidden" id="PrescriptionsSolution">
+                            </div>
+                        </div>
+                        <div class="form-group form-group-full">
+                            <label>Admission Plan</label>
+                            <div id="admissionPlanContainer">
+                                <div class="admin-plan-monitoring-grid">
+                                    <div class="monitoring-item" data-monitoring-key="vitals_frequency_dm">
+                                        <span class="monitoring-label">NEWS Frequency</span>
+                                        <div class="button-group radio-group">
+                                            <button type="button" class="btn-toggle active" data-value="dm">Don't Mind</button>
+                                            <button type="button" class="btn-toggle" data-value="set">Set Frequency</button>
+                                        </div>
+                                    </div>
+                                    <div id="adminVitalsFreq" class="button-group multi-select" style="margin-left: 20px;">
+                                        <button type="button" class="btn-toggle" data-value="8h">8h</button>
+                                        <button type="button" class="btn-toggle" data-value="4h">4h</button>
+                                        <button type="button" class="btn-toggle" data-value="2h">2h</button>
+                                        <button type="button" class="btn-toggle" data-value="1h">1h</button>
+                                    </div>
+                                    <div class="monitoring-item" data-monitoring-key="fasta">
+                                        <span class="monitoring-label">Fasting</span>
+                                        <div class="button-group radio-group">
+                                            <button type="button" class="btn-toggle active" data-value="dm">Don't Mind</button>
+                                            <button type="button" class="btn-toggle" data-value="true">Yes</button>
+                                            <button type="button" class="btn-toggle" data-value="false">No</button>
+                                        </div>
+                                    </div>
+                                    <div class="monitoring-item" data-monitoring-key="urine_output">
+                                        <span class="monitoring-label">Urine Output</span>
+                                        <div class="button-group radio-group">
+                                            <button type="button" class="btn-toggle active" data-value="dm">Don't Mind</button>
+                                            <button type="button" class="btn-toggle" data-value="true">Yes</button>
+                                            <button type="button" class="btn-toggle" data-value="false">No</button>
+                                        </div>
+                                    </div>
+                                    <div class="monitoring-item" data-monitoring-key="daily_weight">
+                                        <span class="monitoring-label">Daily Weight</span>
+                                        <div class="button-group radio-group">
+                                            <button type="button" class="btn-toggle active" data-value="dm">Don't Mind</button>
+                                            <button type="button" class="btn-toggle" data-value="true">Yes</button>
+                                            <button type="button" class="btn-toggle" data-value="false">No</button>
+                                        </div>
+                                    </div>
+                                    <div class="monitoring-item" data-monitoring-key="glucose_curve">
+                                        <span class="monitoring-label">Glucose Curve</span>
+                                        <div class="button-group radio-group">
+                                            <button type="button" class="btn-toggle active" data-value="dm">Don't Mind</button>
+                                            <button type="button" class="btn-toggle" data-value="true">Yes</button>
+                                            <button type="button" class="btn-toggle" data-value="false">No</button>
+                                        </div>
+                                    </div>
+                                    <div class="monitoring-item" data-monitoring-key="surgery_notification">
+                                        <span class="monitoring-label">Operationsanmälan</span>
+                                        <div class="button-group radio-group">
+                                            <button type="button" class="btn-toggle active" data-value="dm">Don't Mind</button>
+                                            <button type="button" class="btn-toggle" data-value="true">Yes</button>
+                                            <button type="button" class="btn-toggle" data-value="false">No</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <h4 style="margin-top: 20px;">Medications</h4>
+                                <div id="admissionPlanMedListContainer" class="item-list-container"></div> <!-- This was missing -->
+                                <button type="button" id="btnAddAdmissionPlanMed" class="btn btn-secondary">Add Medication</button>
+                            </div>
+                            <input type="hidden" id="AdmissionPlanSolution">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn">Save Case</button>
+                    <button type="button" id="btnDeleteCase" class="btn btn-danger hidden">Delete Case</button>
+                </div>
+            </form>
+        </div>
+
+        <div class="admin-sidebar">
+            <h2>Active Simulation</h2>
+            <div id="activePatientList" class="patient-list-container">
+                <!-- Active patients will be populated here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Login Modal -->
+    <div id="adminLoginModal" class="modal-backdrop hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Admin Login</h2>
+            </div>
+            <div class="modal-body">
+                <form id="adminLoginForm">
+                    <p>You must be logged in as an administrator to access this page.</p>
+                    <div class="form-group">
+                        <label for="adminUsername">Username</label>
+                        <input type="text" id="adminUsername" required autocomplete="username">
+                    </div>
+                    <div class="form-group">
+                        <label for="adminPassword">Password</label>
+                        <input type="password" id="adminPassword" required autocomplete="current-password">
+                    </div>
+                    <p id="adminLoginError" class="error-message hidden"></p>
+                    <button type="submit" class="btn">Log In</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Action Selector Modal -->
+    <div id="actionSelectorModal" class="modal-backdrop">
+        <div class="modal-content large-modal">
+            <div class="modal-header">
+                <h2 id="actionSelectorTitle">Select Actions</h2>
+                <button id="closeActionSelector" class="btn-close">×</button>
+            </div>
+            <div class="modal-body">
+                <input type="text" id="actionSearchInput" class="search-input" placeholder="Search actions...">
+                <div id="actionListContainer" class="action-category-list-container"></div>
+            </div>
+            <div class="modal-footer">
+                <button id="btnToggleGroupMode" class="btn-secondary">Start Creating a Group</button>
+                <button id="confirmActionSelection" class="btn-action-final">Confirm Selection</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Admission Plan Medication Modal -->
+    <div id="admissionPlanMedModal" class="modal-backdrop">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Add Medication to Plan</h2>
+                <button id="closeAdmissionPlanMedModal" class="btn-close">×</button>
+            </div>
+            <div class="modal-body">
+                <input type="text" id="admissionPlanMedSearch" class="search-input" placeholder="Search medications...">
+                <div id="admissionPlanMedSearchResults" class="search-results-list"></div>
+                <div id="admissionPlanDoseContainer" class="hidden">
+                    <div id="predefinedDoseInfo" class="hidden">
+                        <p>This medication has a recommended dose range:</p>
+                        <strong id="predefinedDoseRange"></strong>
+                    </div>
+                    <div id="manualDoseInputs" class="hidden">
+                        <div class="form-group">
+                            <label for="admissionPlanMinDose">Min Dose</label>
+                            <div class="input-with-unit"><input type="number" id="admissionPlanMinDose"><span id="admissionPlanMinDoseUnit"></span></div>
+                        </div>
+                        <div class="form-group">
+                            <label for="admissionPlanMaxDose">Max Dose</label>
+                            <div class="input-with-unit"><input type="number" id="admissionPlanMaxDose"><span id="admissionPlanMaxDoseUnit"></span></div>
+                        </div>
+                    </div>
+                    <input type="checkbox" id="admissionPlanVidBehov"> <label for="admissionPlanVidBehov">Vid behov (as needed)</label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="btnConfirmAddAdmissionPlanMed" class="btn-action-final hidden">Add</button>
+                <button id="btnConfirmAddAdmissionPlanMedOr" class="btn-secondary hidden">Add as OR</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Anamnesis Question Modal -->
+   <div id="anamnesisQuestionModal" class="modal-backdrop"> 
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Anamnesis Question</h2>
+                <button id="closeAnamnesisModal" class="btn-close">×</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="anamnesisQuestionIndex">
+                <div class="form-group">
+                    <label for="anamnesisQuestionText">Question</label>
+                    <textarea id="anamnesisQuestionText" rows="3"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="anamnesisKeywordInput">Keywords (press Enter to add)</label>
+                    <input type="text" id="anamnesisKeywordInput" class="search-input" placeholder="e.g., chest pain, fever...">
+                    <div id="anamnesisKeywordsContainer" class="keyword-tag-container"></div>
+                </div>
+                </div>
+            <div class="modal-footer">
+                <button id="btnConfirmAnamnesisQuestion" class="btn-action-final">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Home Medication Modal -->
+    <div id="addHomeMedModal" class="modal-backdrop">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="homeMedModalTitle">Add Home Medication</h2>
+                <button id="closeHomeMedModal" class="btn-close">×</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="homeMedModalId">
+                <input type="hidden" id="homeMedModalUnit">
+                <div class="form-group">
+                    <label for="homeMedModalDose">Dose</label>
+                    <div class="input-with-unit">
+                        <input type="number" id="homeMedModalDose" step="any" placeholder="e.g., 1">
+                        <span id="homeMedModalDoseUnit"></span>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="homeMedModalFrequency">Frequency</label>
+                    <select id="homeMedModalFrequency">
+                        <option value="x1">x1</option>
+                        <option value="x2">x2</option>
+                        <option value="x3">x3</option>
+                        <option value="x4">x4</option>
+                        <option value="v.b">v.b</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="homeMedModalPauseRec">Pause Recommendation</label>
+                    <select id="homeMedModalPauseRec">
+                        <option value="dm">Doesn't Matter</option>
+                        <option value="pause">Should be Paused</option>
+                        <option value="continue">Should be Continued</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="btnConfirmAddHomeMed" class="btn-action-final">Add Medication</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Prescription Selector Modal -->
+    <div id="prescriptionSelectorModal" class="modal-backdrop">
+        <div class="modal-content large-modal">
+            <div class="modal-header">
+                <h2>Select Prescriptions</h2>
+                <button id="closePrescriptionSelector" class="btn-close">×</button>
+            </div>
+            <div class="modal-body">
+                <input type="text" id="prescriptionSearchInput" class="search-input" placeholder="Search medications...">
+                <div id="prescriptionListContainer" class="action-category-list-container">
+                    <!-- Checkboxes will be rendered here -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="confirmPrescriptionSelection" class="btn-action-final">Confirm Selection</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/admin/admin.js" type="module"></script> <!-- Correct, absolute path -->
+</body>
+</html>

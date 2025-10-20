@@ -1,0 +1,169 @@
+import * as api from '../api.js';
+
+export default class PlayerManager {
+    constructor(game) {
+        this.game = game;
+        this.ui = game.ui;
+    }
+
+    async checkInitialAuth() {
+        try {
+            const status = await api.checkAuthStatus();
+            if (status.user) {
+                this.updateUserUI(status.user);
+            }
+        } catch (error) {
+            this.updateUserUI(null);
+        }
+    }
+
+    async registerUser(username, password) {
+        try {
+            const response = await api.registerUser(username, password);
+            const registerError = document.getElementById('registerError');
+            const registerSuccess = document.getElementById('registerSuccess');
+            if (response.ok) {
+                registerError.classList.add('hidden');
+                registerSuccess.classList.remove('hidden');
+                setTimeout(() => {
+                    this.showLoginMenu();
+                    registerSuccess.classList.add('hidden');
+                }, 2000);
+            } else {
+                const data = await response.json();
+                registerSuccess.classList.add('hidden');
+                registerError.textContent = data.message || 'Registration failed.';
+                registerError.classList.remove('hidden');
+            }
+        } catch (err) {
+            console.error('Could not connect to the server for registration.', err);
+        }
+    }
+
+    showMenuView(view) {
+        const mainMenu = document.getElementById('mainMenuControls');
+        const loginMenu = document.getElementById('loginControls');
+        const menuContainer = document.getElementById('menu');
+        menuContainer.classList.remove('hidden');
+        if (view === 'login') {
+            mainMenu.style.display = 'none';
+            loginMenu.classList.remove('hidden');
+        } else {
+            mainMenu.style.display = 'flex';
+            if (this.game.spawnTimer) clearInterval(this.game.spawnTimer);
+            this.game.stopVitalsPolling();
+            loginMenu.classList.add('hidden');
+        }
+    }
+
+    async loginUser(username, password) {
+        try {
+            const response = await api.loginUser(username, password);
+            const data = await response.json();
+            if (!response.ok) {
+                throw new Error(data.message || 'Invalid username or password.');
+            }
+            this.updateUserUI(data.user);
+            this.returnToMenu();
+            document.getElementById('loginError').classList.add('hidden');
+        } catch (err) {
+            const loginError = document.getElementById('loginError');
+            loginError.textContent = err.message;
+            loginError.classList.remove('hidden');
+        }
+    }
+
+    async logoutUser() {
+        await api.logoutUser();
+        this.updateUserUI(null);
+        window.location.reload();
+    }
+
+    showRegisterMenu() {
+        document.getElementById('loginFormContainer').classList.add('hidden');
+        document.getElementById('registerFormContainer').classList.remove('hidden');
+    }
+
+    showLoginMenu() {
+        document.getElementById('registerFormContainer').classList.add('hidden');
+        document.getElementById('loginFormContainer').classList.remove('hidden');
+    }
+
+    returnToMenu() {
+        if (this.game.spawnTimer) clearInterval(this.game.spawnTimer);
+        this.game.stopVitalsPolling();
+        document.getElementById('failureModal').classList.remove('visible');
+        this.showMenuView('main');
+    }
+
+    updateUserUI(user = null) {
+        const loginBtn = document.getElementById('topRightLoginBtn');
+        const userInfoDiv = document.getElementById('userInfo');
+        const usernameDisplay = document.getElementById('usernameDisplay');
+        if (user) {
+            loginBtn.classList.add('hidden');
+            userInfoDiv.classList.remove('hidden');
+            usernameDisplay.textContent = user.username;
+        } else {
+            loginBtn.classList.remove('hidden');
+            userInfoDiv.classList.add('hidden');
+            usernameDisplay.textContent = '';
+        }
+    }
+
+    async showCaseHistory() {
+        try {
+            const history = await api.getCaseHistory();
+            this.ui.renderCaseHistory(history, (id) => this.game.getActionNameById(id), (id) => this.game.getActionCategory(id));
+            document.getElementById('menu').classList.add('hidden');
+            document.getElementById('caseHistoryModal').classList.add('visible');
+        } catch (error) {
+            this.showMenuView('login');
+        }
+    }
+
+    async showPatchNotes() {
+        try {
+            const patchNotesHtml = await api.getPatchNotes();
+            document.getElementById('patchNotesContent').innerHTML = patchNotesHtml;
+            document.getElementById('menu').classList.add('hidden');
+            document.getElementById('patchNotesModal').classList.add('visible');
+        } catch (error) {
+            console.error("Could not load patch notes:", error);
+            alert("Could not load patch notes. Please try again later.");
+        }
+    }
+
+    async showLeaderboard() {
+        try {
+            const leaderboardData = await api.getLeaderboard();
+            this.ui.renderLeaderboard(leaderboardData);
+            document.getElementById('menu').classList.add('hidden');
+            document.getElementById('leaderboardModal').classList.add('visible');
+        } catch (error) {
+            alert("Could not load the leaderboard. Please try again later.");
+        }
+    }
+
+    async showSettingsModal() {
+        try {
+            const settings = await api.getUserSettings();
+            document.getElementById('showOnLeaderboardCheckbox').checked = settings.showOnLeaderboard;
+            document.getElementById('menu').classList.add('hidden');
+            document.getElementById('settingsModal').classList.add('visible');
+        } catch (error) {
+            this.showMenuView('login');
+        }
+    }
+
+    async saveSettings() {
+        const showOnLeaderboard = document.getElementById('showOnLeaderboardCheckbox').checked;
+        try {
+            await api.saveUserSettings({ showOnLeaderboard });
+            document.getElementById('settingsModal').classList.remove('visible');
+            this.showMenuView('main');
+        } catch (error) {
+            alert("Could not save settings. Please try again.");
+        }
+    }
+}

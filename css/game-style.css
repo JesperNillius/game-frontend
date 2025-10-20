@@ -1,3 +1,4 @@
+/* --- Game & Common Styles --- */
  :root { color-scheme: dark; }
     body {
       margin: 0;
@@ -379,7 +380,15 @@
 /* Container for the input and send button at the bottom */
 .chat-input-area {
   display: flex;
+  flex-direction: column; /* Stack input and button container vertically */
+  gap: 10px; /* Add space between input and buttons */
+}
+
+/* NEW: Container for just the buttons */
+.chat-button-container {
+  display: flex;
   gap: 5px;
+  justify-content: flex-end; /* Align buttons to the right */
 }
 
 #chatInput {
@@ -421,6 +430,12 @@
 }
 .btn-action-final:hover {
   background-color: #3f8c53 !important;
+}
+
+.btn-action-final:disabled {
+  background-color: #555 !important;
+  color: #999;
+  cursor: not-allowed;
 }
 
 /* --- Styles for specific modals and their content --- */
@@ -812,33 +827,24 @@
   background-color: #4A726E;
 }
 
-/* Disabled button style */
 #mainMenuControls > button:disabled {
   background-color: #444; /* Darker gray for disabled state */
   color: #888;
   cursor: not-allowed;
 }
 
-/* Secondary buttons (Settings, Log In) */
 #mainMenuControls > #settingsBtn,
-#mainMenuControls > #showLoginBtn {
+#mainMenuControls > #caseHistoryBtn,
+#mainMenuControls > #leaderboardBtn,
+#mainMenuControls > #patchNotesBtn {
   background-color: #555; /* Medium gray to match borders */
-  color: #EAEAEA;
-}
-#mainMenuControls > #caseHistoryBtn {
-  background-color: #555;
   color: #EAEAEA;
 }
 #mainMenuControls > #settingsBtn:hover,
 #mainMenuControls > #leaderboardBtn:hover,
-#mainMenuControls > #showLoginBtn:hover,
-#mainMenuControls > #caseHistoryBtn:hover {
+#mainMenuControls > #caseHistoryBtn:hover,
+#mainMenuControls > #patchNotesBtn:hover {
   background-color: #666; /* Lighter gray for hover */
-}
-
-#mainMenuControls > #leaderboardBtn {
-    background-color: #555;
-    color: #EAEAEA;
 }
 /* --- Custom Oxygen Slider Styles (Final) --- */
 .slider-container {
@@ -1186,14 +1192,17 @@
     box-shadow: 0 5px 25px rgba(0, 0, 0, 0.5);
     width: 90%;
     max-width: 600px; /* Adjust as needed */
-    
+    opacity: flex; 
+
     /* A subtle pop-in animation */
     transform: scale(0.95);
     transition: transform 0.3s ease;
 }
 
 .modal-backdrop.visible .modal-content {
-    transform: scale(1);
+    transform: scale(1) !important;
+    opacity: 1 !important; 
+    visibility: visible !important; 
 }
 
 #dosingModal.visible, #oxygenModal.visible {
@@ -2189,3 +2198,536 @@
 .star:hover {
     transform: scale(1.2); /* Make the hovered star slightly larger */
 }
+
+/* --- Admin Page Styles --- */
+.admin-container {
+    display: flex;
+    height: 100vh;
+    background-color: #2c313a; /* A medium-dark blue-gray background */
+}
+
+.admin-sidebar {
+    width: 250px;
+    flex-shrink: 0;
+    background-color: #21252b; /* A darker sidebar background */
+    border-right: 1px solid #444;
+    padding: 20px;
+    overflow-y: auto;
+}
+
+.admin-sidebar h2 {
+    margin-top: 0;
+    border-bottom: 1px solid #444;
+    padding-bottom: 15px;
+    color: #a9c5e8; /* A light blue accent for the main title */
+}
+
+.btn-new-case {
+    width: 100%;
+    margin-bottom: 20px;
+    background-color: #3d8d89; /* A slightly desaturated teal */
+}
+
+#patientList {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.patient-list-item {
+    padding: 10px;
+    background-color: #2c313a;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.patient-list-name {
+    font-weight: bold;
+}
+
+.patient-list-rating {
+    font-size: 0.8em;
+    color: #888;
+}
+
+.patient-list-rating[style*="--rating: 0"] {
+    color: #666; /* Even dimmer for no ratings */
+}
+
+.patient-list-item:hover {
+    background-color: #4a4a4a;
+}
+
+.admin-main-content {
+    flex-grow: 1;
+    padding: 25px 40px;    
+    color: #e0e0e0; /* Light text for the new dark background */
+    overflow-y: auto;
+}
+
+#patientForm {
+    margin-top: 20px;
+}
+
+#patientForm h3 {
+    margin-top: 30px;
+    margin-bottom: 10px;
+    border-bottom: 1px solid #444;
+    padding-bottom: 8px;
+    color: #a9c5e8; /* Use the accent color for main headers */
+}
+
+.sub-header {
+    font-size: 1.1em;
+    color: #aaa;
+    margin-top: 40px; /* More space above for separation */
+    margin-bottom: 15px;
+    border-top: 1px solid #444;
+    padding-top: 15px;
+}
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px 20px;
+}
+
+.compact-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 15px 20px;
+}
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-group label {
+    margin-bottom: 5px;
+    font-size: 0.9em;
+    color: #aaa;
+}
+
+.form-group input[type="text"],
+.form-group input[type="number"],
+.form-group textarea {
+    width: 100%;    
+    padding: 8px;
+    background-color: #1c1c1e;
+    border: 1px solid #555;
+    border-radius: 4px;
+    color: #fff;
+    font-size: 1em;
+    box-sizing: border-box;
+}
+.form-group select {
+    padding: 8px;
+    background-color: #1c1c1e;
+    border: 1px solid #555;
+    border-radius: 4px;
+    color: #fff;
+    font-size: 1em;
+}
+
+.form-group textarea {
+    resize: vertical;
+    min-height: 60px;
+    font-family: inherit;
+}
+
+.form-actions {
+    margin-top: 30px;
+    display: flex;
+    gap: 15px;
+}
+
+.btn-remove {
+    background-color: #a34141;
+}
+
+.admin-sidebar h3 {
+    margin-top: 25px;
+    margin-bottom: 10px;
+    font-size: 1em;
+    color: #8a9eb5; /* A softer blue-gray for sub-headers */
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-top: 1px solid #444;
+    padding-top: 15px;
+}
+
+#activePatientList {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    margin-bottom: 20px;
+}
+
+.active-patient-item {
+    padding: 8px 10px;
+    background-color: #2c3e50; /* A distinct blue for active items */
+    border-left: 3px solid #3498db;
+    border-radius: 4px;
+    font-size: 0.9em;
+}
+
+/* --- Admin Page Action Selector Styles --- */
+.form-group-full {
+    grid-column: 1 / -1; /* Make this group span all columns */
+}
+
+.selected-actions-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 10px;
+    background-color: #2a2a2e; /* A slightly lighter dark background for containers */
+    border: 1px solid #444;
+    border-radius: 6px;
+    min-height: 40px;
+    margin-bottom: 10px;
+}
+
+.action-tag {
+    background-color: #3498db;
+    color: #fff;
+    padding: 5px 10px;
+    border-radius: 12px;
+    font-size: 0.9em;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-select-actions {
+    align-self: flex-start;
+    background-color: #4a4a4a;
+}
+
+/* Modal specific styles */
+#actionSelectorModal .modal-content {
+    height: 80vh;
+    display: flex;
+    flex-direction: column;
+}
+
+#actionSelectorModal .modal-body {
+    flex-grow: 1;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+#actionSelectorModal .search-input {
+    margin-bottom: 15px; /* Space below search input */
+}
+
+.action-category-list-container { /* This is the scrollable part */
+    flex-grow: 1;
+    overflow-y: auto;
+    padding-right: 10px; /* Space for scrollbar */
+    display: flex;
+    flex-direction: column;
+    gap: 20px; /* Space between category groups */
+}
+
+.action-category-group h4 {
+    margin-top: 0;
+    margin-bottom: 10px;
+    border-bottom: 1px solid #555;
+    padding-bottom: 5px;
+    color: #eee;
+    font-size: 1.1em;
+}
+
+.action-checkbox-grid { /* Specific grid for actions within categories */
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 8px;
+}
+
+/* Reuse existing .checkbox-label styles */
+.action-checkbox-grid .checkbox-label {
+    background-color: #3a3a3a;
+    border: 1px solid #444;
+    border-radius: 4px;
+    padding: 8px 10px;
+}
+
+.action-checkbox-grid .checkbox-label:hover {
+    background-color: #4a4a4a;
+}
+
+/* Style for OR group checkboxes in the modal */
+.action-checkbox-grid .checkbox-label.is-or-group {
+    grid-column: 1 / -1; /* Make the group span all columns */
+    background-color: #2c3e50;
+}
+
+/* Style for checkboxes that are "frozen" during grouping mode */
+.checkbox-label.is-frozen {
+    background-color: #3a3a3a;
+    border-style: dashed;
+}
+
+/* --- Styles for cross-category action indicators --- */
+.checkbox-label.is-in-other-category {
+    opacity: 0.6;
+    background-color: #222;
+    cursor: not-allowed;
+    position: relative;
+}
+
+.checkbox-label.is-in-other-category::after {
+    content: attr(data-other-category); /* Use the data attribute for the text */
+    position: absolute;
+    top: 2px;
+    right: 5px;
+    font-size: 0.7em;
+    font-weight: bold;
+    color: #fff;
+    background-color: #6c757d; /* A neutral gray */
+    padding: 2px 5px;
+    border-radius: 8px;
+}
+
+.checkbox-label.is-in-other-category[data-other-category="Critical"]::after,
+.checkbox-label.is-in-other-category[data-other-category="Contraindicated"]::after {
+    background-color: #a34141; /* Red for more important categories */
+}
+
+/* --- Home Medication List Styles --- */
+.item-list-container {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 10px;
+    background-color: #2a2a2e;
+    border: 1px solid #444;
+    border-radius: 6px;
+    min-height: 40px;
+    margin-bottom: 10px;
+}
+
+.home-med-list-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    background-color: #3a3a3a;
+    border-radius: 4px;
+}
+
+.home-med-list-item span {
+    font-weight: bold;
+}
+
+/* --- Add Home Med Modal --- */
+#addHomeMedModal .modal-content {
+    max-width: 500px;
+}
+
+.search-results-list {
+    max-height: 150px;
+    overflow-y: auto;
+    background-color: #1c1c1e;
+    border: 1px solid #555;
+    border-radius: 4px;
+    margin-top: 5px;
+}
+
+.search-result-item {
+    padding: 10px;
+    cursor: pointer;
+}
+
+.search-result-item:hover, .search-result-item.selected {
+    background-color: #3498db;
+    color: #fff;
+}
+
+.search-results-list:empty {
+    display: none;
+}
+
+/* Styles for highlighted items in search results */
+.search-result-item.is-critical {
+    background-color: #2980b9; /* Blue for critical */
+    color: #fff;
+}
+
+.search-result-item.is-contraindicated {
+    background-color: #c0392b; /* Red for contraindicated */
+    color: #fff;
+}
+
+/* Style for the unit display next to an input */
+.input-unit-display {
+    align-self: center;
+    margin-left: -35px; /* Position it inside the input field area */
+    color: #888;
+    pointer-events: none; /* Make it non-interactive */
+}
+
+/* --- Anamnesis Checklist Styles --- */
+.anamnesis-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 12px;
+    background-color: #3a3a3a;
+    border-radius: 4px;
+}
+
+.anamnesis-item-text {
+    flex-grow: 1;
+}
+
+.anamnesis-item-text .question {
+    font-weight: bold;
+    display: block;
+    margin-bottom: 5px;
+}
+
+.anamnesis-item-text .keywords {
+    font-size: 0.85em;
+    color: #ccc;
+    font-style: italic;
+}
+
+.anamnesis-item-actions .btn-secondary,
+.anamnesis-item-actions .btn-remove {
+    padding: 4px 8px;
+    font-size: 0.8em;
+    margin-left: 5px;
+}
+
+/* --- Anamnesis Modal --- */
+.keyword-input-group {
+    display: flex;
+}
+
+.keyword-tag-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-top: 10px;
+}
+
+.keyword-tag {
+    background-color: #555;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.9em;
+    display: flex;
+    align-items: center;
+}
+
+.keyword-tag .remove-keyword {
+    margin-left: 8px;
+    cursor: pointer;
+    font-weight: bold;
+    color: #aaa;
+}
+
+/* --- Rating Modal Text Container --- */
+#ratingTextContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+/* --- Admin Home Med Pause Recommendation Badge --- */
+.pause-rec-badge {
+    display: inline-block;
+    padding: 2px 6px;
+    font-size: 0.7em;
+    font-weight: bold;
+    border-radius: 8px;
+    color: #fff;
+    vertical-align: middle;
+}
+.pause-rec-badge.pause {
+    background-color: #c0392b; /* Red */
+}
+.pause-rec-badge.continue {
+    background-color: #27ae60; /* Green */
+}
+/* Style for the Arterial Blood Gas Grid */
+.abg-grid {
+  display: grid; /* Tells the browser to use a grid layout */
+  grid-template-columns: auto 1fr; /* Two columns: label size adjusts, value takes remaining space */
+  gap: 2px 10px; /* Spacing between rows and columns */
+  margin-top: 5px;
+  font-size: 0.9em;
+}
+
+/* Styles the individual value spans if they are abnormal */
+.abg-grid .abnormal {
+  color: #ff6b6b; /* Reddish color */
+  font-weight: bold;
+}
+
+/* Ensures the container div handles the grid layout nicely */
+.lab-result-item.is-panel {
+    display: block; /* Override the default flex layout for panels */
+}
+.lab-result-item.is-panel .lab-result-name {
+    display: block; /* Make the name take its own line */
+    margin-bottom: 5px; /* Add space below the name */
+}
+.lab-result-item.is-panel .lab-result-value {
+   /* No specific styles needed here now */
+}
+
+/* --- Admission Plan Modal Enhancements --- */
+
+.plan-disposition-display {
+  background-color: #1c1c1e; /* Darker background like an input field */
+  border: 1px solid #444;
+  border-radius: 6px;
+  padding: 10px 15px;
+  margin-bottom: 20px;
+  font-size: 1em;
+  color: #e0e0e0; /* Match h4 color */
+}
+
+.plan-disposition-display strong {
+  color: #a0a0a0; /* Slightly different color for the "Intervention:" label */
+  margin-right: 0.5em;
+}
+
+/* --- Large Modal Sizing --- */
+.modal-content.large-modal {
+    height: 85vh; /* Set a relative height */
+    max-height: 800px; /* Set a max pixel height */
+    display: flex;
+    flex-direction: column;
+}
+.large-modal .modal-body {
+    flex-grow: 1; /* Allow the body to fill the available space */
+    overflow-y: auto; /* Make only the body scrollable */
+    padding-right: 15px; /* Add some space for the scrollbar */
+}
+
+/* --- Patch Notes Styles --- */
+#patchNotesContent {
+    line-height: 1.6;
+    color: #e0e0e0;
+}
+
+#patchNotesContent h1,
+#patchNotesContent h2,
+#patchNotesContent h3 {
+    margin-top: 1.5em;
+    margin-bottom: 0.5em;
+    padding-bottom: 0.3em;
+    border-bottom: 1px solid #444;
+    color: #fff;
+}
+#patchNotesContent ul { padding-left: 20px; }
+#patchNotesContent code { background-color: #1c1c1e; padding: 2px 5px; border-radius: 4px; }

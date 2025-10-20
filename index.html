@@ -10,7 +10,7 @@
     
     <!-- The favicon link will be set dynamically by JavaScript -->
     <link id="favicon" rel="icon" href="#" type="image/x-icon">
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="/css/game-style.css">
 
   </head>
   <body>
@@ -41,7 +41,8 @@
           <h1>AQTEN</h1>
           <button id="playBtn" disabled>Loading...</button>
           <button id="caseHistoryBtn">Case History</button>
-          <button id="leaderboardBtn">Leaderboard</button>          
+          <button id="leaderboardBtn">Leaderboard</button>    
+          <button id="patchNotesBtn">Patch Notes</button>
           <button id="settingsBtn">Settings</button>
 
         </div>
@@ -127,6 +128,23 @@
     </div>
   </div>
 
+  <div id="patchNotesModal" class="modal-backdrop">
+    <div class="modal-content large-modal">
+        <div class="modal-header">
+            <h2>Patch Notes</h2>
+            <button id="closePatchNotesBtn" class="btn-close">×</button>
+        </div>
+        <div class="modal-body">
+            <div id="patchNotesContent">
+                <!-- Patch notes will be rendered here -->
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button id="backToMenuFromPatchNotesBtn" class="btn-secondary">Back to Menu</button>
+        </div>
+    </div>
+  </div>
+
   <div id="vitalsPopup">
     <div id="vitalsHeader">
       <h3 id="vitalsTitle">Patient Vitals</h3>
@@ -142,15 +160,15 @@
         <button class="accordion-header">Physical Exam</button>
         <div class="accordion-content" id="physExamContent"></div>
       </div>
-      
-      <div class="accordion">
-        <button class="accordion-header">Lab Results</button>
-        <div class="accordion-content" id="labResultsContent"></div>
-      </div>
 
       <div class="accordion">
         <button class="accordion-header">Bedside Tests</button>
         <div class="accordion-content" id="bedsideTestContent"></div>
+      </div>
+      
+      <div class="accordion">
+        <button class="accordion-header">Lab Results</button>
+        <div class="accordion-content" id="labResultsContent"></div>
       </div>
 
       <div class="accordion">
@@ -268,8 +286,11 @@
     <h4>Anamnesis</h4>
     <div id="chatMessages"></div>
     <div class="chat-input-area">
-      <input id="chatInput" type="text" placeholder="Ask the patient..." autocomplete="off">
-      <button id="sendBtn">Send</button>
+      <input id="chatInput" type="text" placeholder="Ask the patient..." autocomplete="off" />
+      <div class="chat-button-container">
+        <button id="btnSomaetas" class="btn-secondary">SOMAÄTAS</button>
+        <button id="sendBtn">Send</button>
+      </div>
     </div>
   </div>
 
@@ -299,6 +320,8 @@
         <button id="btnSendHome">Send Home</button>
         <button id="btnAdmitWard">Admit to Ward</button>
         <button id="btnTransferPCI">Transfer to PCI</button>
+        <button id="btnTransferTrombolys">Lägg in för trombolys</button>
+
       </div>
       <button id="btnCancelDisposition" style="background: #555; margin-top: 15px;">Cancel</button>
     </div>
@@ -390,6 +413,10 @@
       </div>
 
       <div class="modal-body">
+        <div id="admissionPlanDisposition" class="plan-disposition-display">
+          <!-- The chosen disposition like 'PCI' will be displayed here -->
+        </div>
+
         <h4>Mediciner närmsta dygnet</h4>
         <div id="planMedicationOrdersList"></div>
         <div class="add-med-container" style="margin-top: 10px;"> <button id="btnAddPlanMed" class="btn btn-secondary">Lägg till medicin</button></div>
@@ -467,26 +494,31 @@
     </div>
   </div>
 
-  <div id="ratingModal" class="modal-backdrop">
+  <!-- MODAL 1: Star Rating (Mandatory) -->
+  <div id="starRatingModal" class="modal-backdrop">
     <div class="modal-content">
         <div class="modal-header">
             <h2>Rate this Case</h2>
         </div>
         <div class="modal-body">
             <p>How would you rate the quality and educational value of this case?</p>
-            <div id="starRatingContainer" class="star-rating-container">
+            <div id="starRatingStars" class="star-rating-container">
                 <span class="star" data-value="1">☆</span>
                 <span class="star" data-value="2">☆</span>
                 <span class="star" data-value="3">☆</span>
                 <span class="star" data-value="4">☆</span>
                 <span class="star" data-value="5">☆</span>
             </div>
-            <textarea id="ratingFeedbackText" class="feedback-textarea" placeholder="Optional: Any suggestions or comments..."></textarea>
         </div>
-        <div class="modal-footer">
-            <button id="btnSubmitRating" class="btn-action-final" disabled>Submit</button>
-            <button id="btnSkipRating" class="btn-secondary">Skip</button>
-        </div>
+    </div>
+  </div>
+
+  <!-- MODAL 2: Text Feedback (Optional) -->
+  <div id="textFeedbackModal" class="modal-backdrop">
+    <div class="modal-content">
+        <div class="modal-header"><h2>Optional Feedback</h2></div>
+        <div class="modal-body"><textarea id="ratingFeedbackText" class="feedback-textarea" placeholder="Any suggestions or comments..."></textarea></div>
+        <div class="modal-footer"><button id="btnSubmitTextFeedback" class="btn-action-final" disabled>Submit</button><button id="btnSkipTextFeedback" class="btn-secondary">Skip</button></div>
     </div>
   </div>
 
@@ -495,8 +527,8 @@
   <div id="critical-warning-overlay" class="hidden"></div>
   
 
-
-    <script src="js/main.js" type="module"></script>
+    <!-- The main.js file will now correctly import from the /js/game/ directory -->
+    <script src="js/main.js" type="module"></script> 
 
 
   </body>

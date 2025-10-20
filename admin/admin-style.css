@@ -1,0 +1,735 @@
+/*
+========================================
+          ADMIN PANEL STYLES
+========================================
+*/
+
+/*
+ * 1. VARIABLES
+ * --------------------------------------
+ */
+:root {
+    /* Inspired by chess.com's dark theme */
+    --admin-bg-primary: #312e2b;      /* Main background (dark wood) */
+    --admin-bg-secondary: #262421;    /* Sidebar, modals (darker) */
+    --admin-bg-tertiary: #3b3936;     /* List items, containers (lighter) */
+    --admin-bg-input: #262421;        /* Input fields */
+
+    --admin-text-light: #e7e5e2;      /* Main light text */
+    --admin-text-med: #b2b0af;        /* Medium emphasis text */
+    --admin-text-dark: #807e7c;       /* Low emphasis text */
+
+    --admin-accent-primary: #4091b4;    /* Main accent color (blue) */
+    --admin-accent-primary-hover: #437ec6; /* Lighter blue for hover */
+    --admin-accent-secondary: #26a6e5;  /* Secondary button blue */
+    --admin-accent-secondary-hover: #186c96; /* Darker secondary for hover */
+
+    --admin-accent-danger: #a34141;
+    --admin-accent-danger-hover: #c0392b;
+
+    --admin-border-color: #45423f;
+    --admin-focus-ring: rgba(64, 145, 180, 0.4); /* Blue focus ring */
+
+    --admin-border-radius: 4px;
+    --admin-font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+/*
+ * 2. BASE & LAYOUT
+ * --------------------------------------
+ */
+body {
+    font-family: var(--admin-font-family);
+}
+
+.admin-container {
+    display: flex;
+    height: 100vh;
+    background-color: var(--admin-bg-primary);
+    color: var(--admin-text-light);
+}
+
+.admin-sidebar {
+    width: 250px;
+    flex-shrink: 0;
+    background-color: var(--admin-bg-secondary);
+    border-right: 1px solid var(--admin-border-color);
+    padding: 20px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.admin-main-content {
+    flex-grow: 1;
+    padding: 25px 40px;
+    overflow-y: auto;
+}
+
+/*
+ * 3. GENERIC COMPONENTS
+ * --------------------------------------
+ */
+
+/* Primary button style (chess.com green) */
+.btn {
+    padding: 10px 20px;
+    font-size: 14px;
+    font-weight: 600;
+    border: none;
+    border-radius: var(--admin-border-radius);
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.1s ease;
+    text-align: center;
+    color: rgb(255, 255, 255);
+    background-color: var(--admin-accent-primary);
+}
+
+.btn:hover {
+    background-color: var(--admin-accent-primary-hover);
+}
+
+.btn:active {
+    transform: translateY(1px); /* Gives a "press" effect */
+}
+
+.btn-secondary {
+    background-color: var(--admin-accent-secondary);
+    border: 1px solid var(--admin-accent-secondary);
+    color: rgb(255, 255, 255);
+}
+
+.btn-secondary:hover {
+    background-color: var(--admin-accent-secondary-hover);
+    color: rgb(255, 255, 255);
+    border: 1px solid var(--admin-accent-secondary-hover);
+}
+
+/* Destructive action button */
+.btn-danger {
+    background-color: var(--admin-accent-danger);
+}
+.btn-danger:hover {
+    background-color: var(--admin-accent-danger-hover);
+}
+
+.btn-action-final {
+    background-color: var(--admin-accent-primary) !important;
+    color: #fff !important;
+    border: none; /* Remove the default browser border */
+    /* Make it larger and match the style of other primary buttons */
+    padding: 12px 24px;
+    border-radius: var(--admin-border-radius);
+    font-weight: 600;
+}
+.btn-action-final:hover {
+    background-color: var(--admin-accent-primary-hover) !important;
+}
+
+/* --- Forms & Inputs --- */
+.form-section {
+    margin-top: 30px;
+}
+
+.form-section h3 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    border-bottom: 1px solid var(--admin-border-color);
+    padding-bottom: 10px;
+    color: var(--admin-text-light);
+    font-weight: 600;
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px 20px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.form-group label {
+    font-size: 0.9em;
+    color: var(--admin-text-med);
+}
+
+input[type="text"],
+input[type="number"],
+textarea,
+select {
+    width: 100%;
+    padding: 10px;
+    background-color: var(--admin-bg-input);
+    border: 1px solid var(--admin-border-color);
+    border-radius: var(--admin-border-radius);
+    color: var(--admin-text-light);
+    font-size: 1em;
+    box-sizing: border-box;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+input:focus, textarea:focus, select:focus {
+    outline: none;
+    border-color: var(--admin-accent-primary);
+    box-shadow: 0 0 0 3px var(--admin-focus-ring);
+}
+
+textarea {
+    resize: vertical;
+    min-height: 80px;
+    font-family: var(--admin-font-family);
+}
+
+/* Make inputs inside modals darker to stand out */
+.modal-body input[type="text"],
+.modal-body input[type="number"],
+.modal-body textarea {
+    background-color: #1c1c1e; /* A darker shade than the modal background */
+}
+
+/* Ensure dose inputs in modals are spaced correctly */
+.modal-body #manualDoseInputs {
+    display: flex;
+    gap: 15px;
+}
+.form-actions {
+    margin-top: 30px;
+    display: flex;
+    gap: 15px;
+}
+
+/* --- Modals --- */
+.modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.6);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.modal-backdrop.visible {
+    opacity: 1;
+    visibility: visible;
+}
+
+.modal-content {
+    background-color: var(--admin-bg-secondary);
+    padding: 20px 30px;
+    border-radius: var(--admin-border-radius);
+    box-shadow: 0 5px 25px rgba(0, 0, 0, 0.5);
+    width: 90%;
+    max-width: 600px;
+    transform: scale(0.95);
+    transition: transform 0.3s ease;
+}
+
+.modal-backdrop.visible .modal-content {
+    transform: scale(1);
+}
+
+.modal-content.large-modal {
+    max-width: 800px;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    border-bottom: 1px solid var(--admin-border-color);
+    padding-bottom: 15px;
+}
+
+.modal-header h2 {
+    margin: 0; /* This line is already there */
+    color: var(--admin-text-light);
+}
+
+.modal-footer {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-top: 25px;
+    padding-top: 15px;
+    border-top: 1px solid var(--admin-border-color);
+}
+
+.modal-body {
+    /* Ensure all text inside the modal body is light and readable */
+    color: var(--admin-text-light);
+}
+
+.btn-close {
+    background: none;
+    border: none;
+    font-size: 2.2rem;
+    line-height: 1;
+    color: var(--admin-text-dark); /* Set to a subtle gray */
+    cursor: pointer;
+    padding: 0 5px;
+    transition: color 0.2s ease;
+}
+
+.btn-close:hover {
+    color: var(--admin-text-light); /* Make it brighter on hover */
+}
+
+/* --- Lists & Tags --- */
+.item-list-container {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 10px;
+    background-color: var(--admin-bg-input);
+    border: 1px solid var(--admin-border-color);
+    border-radius: var(--admin-border-radius);
+    min-height: 40px;
+    margin-bottom: 10px;
+}
+
+.item-list-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    background-color: var(--admin-bg-light);
+    border-radius: 4px;
+}
+
+.action-tag, .keyword-tag {
+    color: #fff;
+    padding: 5px 10px;
+    border-radius: 12px;
+    font-size: 0.9em;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.action-tag.tag-physical-exam { background-color: #2980b9; }
+.action-tag.tag-bedside-test { background-color: #27ae60; }
+.action-tag.tag-lab-test { background-color: #f39c12; color: #111; }
+.action-tag.tag-radiology { background-color: #8e44ad; }
+.action-tag.tag-medication { background-color: #c0392b; }
+.action-tag.tag-or-group { background-color: #6c757d; border: 1px dashed #aaa; }
+
+.keyword-tag {
+    background-color: #555;
+}
+
+.keyword-tag .remove-keyword {
+    margin-left: 8px;
+    cursor: pointer;
+    font-weight: bold;
+    color: var(--admin-text-med);
+}
+
+/* --- Search & Dropdowns --- */
+.search-container {
+    position: relative;
+}
+
+.search-input {
+    width: 100%;
+    padding: 10px 15px;
+    background-color: var(--admin-bg-input);
+    border: 1px solid var(--admin-border-color);
+    border-radius: var(--admin-border-radius);
+    color: var(--admin-text-light);
+    font-size: 16px;
+    box-sizing: border-box;
+}
+
+.search-results {
+    position: absolute;
+    background-color: var(--admin-bg-secondary);
+    border: 1px solid var(--admin-border-color);
+    border-radius: 4px;
+    width: 100%;
+    z-index: 10;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.search-result-item {
+    padding: 10px;
+    cursor: pointer;
+}
+.search-result-item:hover {
+    background-color: #3498db;
+}
+
+/* --- Button Groups --- */
+.button-group {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.btn-toggle {
+    flex-grow: 1;
+    padding: 8px 12px;
+    cursor: pointer;    
+    background-color: var(--admin-bg-tertiary);
+    border: 1px solid var(--admin-border-color);
+    color: var(--admin-text-med);
+    border-radius: var(--admin-border-radius);
+    font-size: 13px;
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.btn-toggle:hover {
+    background-color: #4a4a4a;
+}
+
+.btn-toggle.active {
+    background-color: var(--admin-accent-primary);
+    color: var(--admin-text-light);
+    border-color: var(--admin-accent-primary);
+}
+
+/*
+ * 4. PAGE-SPECIFIC SECTIONS
+ * --------------------------------------
+ */
+
+/* --- Sidebar Lists --- */
+.admin-sidebar h2 {
+    margin-top: 0;
+    border-bottom: 1px solid var(--admin-border-color);
+    padding-bottom: 10px;
+    color: var(--admin-text-light);
+}
+
+.patient-list-container {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.patient-list-item {
+    padding: 10px;
+    background-color: var(--admin-bg-tertiary);
+    border-radius: var(--admin-border-radius);
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.patient-list-item:hover {
+    background-color: #45423f;
+}
+
+.active-patient-item {
+    padding: 8px 10px;
+    background-color: #2c3e50;
+    border-left: 3px solid #3498db;
+    border-radius: 4px;
+    font-size: 0.9em;
+}
+
+/* --- Patient Form Specifics --- */
+.selected-actions-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 10px;
+    background-color: var(--admin-bg-input);
+    border: 1px solid var(--admin-border-color);
+    border-radius: var(--admin-border-radius);
+    min-height: 40px;
+    margin-bottom: 10px;
+}
+
+.btn-select-actions {
+    align-self: flex-start;
+}
+
+/* --- Abnormal Findings --- */
+.findings-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+}
+
+.findings-container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.finding-input-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.finding-input-item.ekg-item {
+    flex-direction: column;
+    align-items: flex-start;
+    background-color: var(--admin-bg-tertiary);
+    border-left: 4px solid #8e44ad; /* Purple accent for EKG */
+    padding: 10px;
+    border-radius: 4px;
+    position: relative;
+}
+
+/* --- Admission Plan --- */
+.admin-plan-monitoring-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 20px;
+}
+
+.monitoring-item {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px 20px;
+}
+
+.monitoring-label {
+    font-weight: bold;
+    flex-basis: 150px; /* Give labels a consistent width */
+}
+
+/* --- Avatar Drop Zone --- */
+.avatar-drop-zone {
+    border: 2px dashed var(--admin-border-color);
+    border-radius: var(--admin-border-radius);
+    padding: 15px;
+    text-align: center;
+    cursor: pointer;
+    background-color: var(--admin-bg-input);
+    color: var(--admin-text-med);
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+    position: relative;
+    min-height: 100px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.avatar-drop-zone.drag-over {
+    background-color: var(--admin-bg-tertiary);
+    border-color: var(--admin-accent-blue);
+}
+
+#patientAvatarPreview {
+    max-width: 80px;
+    max-height: 80px;
+    margin-bottom: 10px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+#clearPatientAvatar {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+}
+
+/*
+ * 5. UTILITY CLASSES
+ * --------------------------------------
+ */
+.hidden {
+    display: none !important;
+}
+
+.error-message {
+    color: var(--admin-accent-danger);
+}
+
+.error-message.hidden {
+    visibility: hidden;
+}
+
+/* Style for the Dose + Unit container in the modal */
+.input-with-unit {
+    display: flex;
+    align-items: center;
+    /* Use the same background/border as other inputs */
+    background-color: var(--admin-bg-input);
+    border: 1px solid var(--admin-border-color);
+    border-radius: var(--admin-border-radius);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Make the input inside fill the space and remove its individual border */
+.input-with-unit input[type="number"] {
+    width: 100%;
+    flex-grow: 1;
+    border: none;
+    box-shadow: none; /* Remove shadow, as it will be on the wrapper */
+    background-color: transparent; /* Inherit wrapper's background */
+}
+
+/* Add the focus style to the whole wrapper */
+.input-with-unit:focus-within {
+    outline: none;
+    border-color: var(--admin-accent-teal);
+    box-shadow: 0 0 0 2px var(--admin-focus-ring);
+}
+
+/* This rule fixes your color issue */
+#homeMedModalDoseUnit {
+    color: var(--admin-text-med); /* Sets color to medium gray (#aaa) */
+    padding-right: 10px;
+    font-size: 0.9em;
+    flex-shrink: 0; /* Prevents the unit from wrapping */
+}
+
+/* --- Home Medication List --- */
+.home-med-list-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 15px;
+    background-color: var(--admin-bg-tertiary);
+    border-radius: var(--admin-border-radius);
+    border-left: 3px solid var(--admin-accent-primary);
+    transition: background-color 0.2s ease;
+}
+
+.home-med-list-item:hover {
+    background-color: #3a404b;
+}
+
+.home-med-list-item .med-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.home-med-list-item .med-name {
+    font-weight: 600;
+    color: var(--admin-text-light);
+}
+
+.home-med-list-item .med-details {
+    font-size: 0.9em;
+    color: var(--admin-text-med);
+}
+
+.btn-remove-item {
+    background-color: transparent;
+    border: none;
+    color: var(--admin-text-dark);
+    font-size: 1.5rem;
+    cursor: pointer;
+    transition: color 0.2s ease;
+}
+.btn-remove-item:hover {
+    color: var(--admin-accent-danger);
+}
+
+/* --- Action Selector Modal --- */
+#actionListContainer {
+    max-height: 60vh;
+    overflow-y: auto;
+    padding: 15px;
+    background-color: var(--admin-bg-input);
+    border-radius: var(--admin-border-radius);
+    margin-top: 15px;
+    border: 1px solid var(--admin-border-color);
+}
+
+.action-category-group {
+    margin-bottom: 25px;
+}
+
+.action-category-group:last-child {
+    margin-bottom: 0;
+}
+
+.action-category-group h4 {
+    margin: 0 0 15px 0;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--admin-border-color);
+    color: var(--admin-text-med);
+    font-size: 1.1em;
+    font-weight: 600;
+}
+
+.action-checkbox-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 10px;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+    background-color: #3a404b; /* A slightly lighter background for better contrast */
+    border-radius: var(--admin-border-radius);
+    cursor: pointer;
+    transition: background-color 0.2s ease, box-shadow 0.2s ease;
+    border: 1px solid transparent;
+    color: var(--admin-text-light); /* Explicitly set text color to white/light gray */
+}
+
+.checkbox-label:hover {
+    background-color: #45423f;
+}
+
+.checkbox-label input[type="checkbox"] {
+    margin-right: 10px;
+}
+
+.checkbox-label input[type="checkbox"]:checked + span {
+    font-weight: bold;
+    color: var(--admin-accent-primary);
+}
+
+.checkbox-label.is-or-group {
+    background-color: #54514f;
+    border-color: var(--admin-accent-primary);
+    grid-column: 1 / -1; /* Make OR groups span the full width */
+}
+
+.checkbox-label.is-in-other-category,
+.checkbox-label.is-frozen {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background-color: #222;
+}
+
+.checkbox-label.is-in-other-category::after {
+    content: ' (in ' attr(data-other-category) ')';
+    font-style: italic;
+    font-size: 0.8em;
+    margin-left: 5px;
+}
+
+/* --- Prescription Selector Modal --- */
+#prescriptionListContainer {
+    max-height: 60vh; /* 60% of the viewport height */
+    overflow-y: auto;
+    padding: 15px;
+    background-color: var(--admin-bg-input);
+    border-radius: var(--admin-border-radius);
+    margin-top: 15px;
+    border: 1px solid var(--admin-border-color);
+}

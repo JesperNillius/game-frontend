@@ -145,11 +145,12 @@ export async function orderRadiology(patientId, testId) {
 }
 
 export async function administerMedication(patientId, medId, dose) {
-    await fetch(`${API_URL}/api/patient/${patientId}/give-med`, {
+    const response = await fetch(`${API_URL}/api/patient/${patientId}/give-med`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ medId, dose })
     });
+    return response.json(); // Return the JSON response from the server
 }
 
 export async function setTherapy(patientId, therapyId, value) {
@@ -204,4 +205,12 @@ export async function rateCase(caseId, rating, feedbackText) {
         throw new Error('Could not submit rating.');
     }
     return response.json();
+}
+
+export async function getPatchNotes() {
+    const response = await fetch(`${API_URL}/api/patch-notes`, {
+        credentials: 'include'
+    });
+    if (!response.ok) throw new Error('Failed to get patch notes');
+    return response.text(); // Return as text because the backend sends HTML
 }

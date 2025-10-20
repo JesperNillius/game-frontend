@@ -1,15 +1,21 @@
 // Global canvas and context
-const canvas = document.getElementById("gameCanvas");
-const ctx = canvas.getContext("2d");
-
-ctx.imageSmoothingQuality = "high";
+let canvas = null;
+let ctx = null;
 
 // World dimensions
 const worldWidth = 1300;
 const worldHeight = 650;
 
-// Export dimensions so other modules can use them
 export { canvas, ctx, worldWidth, worldHeight };
+
+/**
+ * Initializes the canvas and context variables. This must be called after the DOM is loaded.
+ */
+export function initCanvas() {
+    canvas = document.getElementById("gameCanvas");
+    ctx = canvas.getContext("2d");
+    ctx.imageSmoothingQuality = "high";
+}
 
 export function resizeCanvas() {
     // Get the device pixel ratio to determine screen density

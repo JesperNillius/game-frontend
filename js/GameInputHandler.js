@@ -1,13 +1,15 @@
 import * as utils from './utils.js';
 import { canvas } from './canvas.js';
-import * as ui from './ui.js';
+import * as gameUi from './common/ui.js';
 
-export default class InputHandler {
+export default class GameInputHandler {
     constructor(game) {
         this.game = game; // Reference to the main game "manager"
+        this.ui = gameUi;     // Reference to the specific UI module (gameUi or adminUi)
+    }
 
-        // The constructor's only job is to attach the listeners.
-        // Each listener calls a clean handler method below.
+    init() {
+        // This init method is now called from GameMainController.init(), ensuring all elements exist.
         canvas.addEventListener("mousedown", (e) => this.handleMouseDown(e));
         canvas.addEventListener("mousemove", (e) => this.handleMouseMove(e));
         canvas.addEventListener("mouseup", (e) => this.handleMouseUp(e));
@@ -36,6 +38,7 @@ export default class InputHandler {
         document.getElementById("playBtn").addEventListener("click", () => this.game.startGame());
         document.getElementById('btnReturnToMenu').addEventListener('click', () => this.game.returnToMenu());
         document.getElementById('caseHistoryBtn').addEventListener('click', () => this.game.showCaseHistory());
+        document.getElementById('patchNotesBtn').addEventListener('click', () => this.game.showPatchNotes());
         document.getElementById('leaderboardBtn').addEventListener('click', () => this.game.showLeaderboard());
         document.getElementById('settingsBtn').addEventListener('click', () => this.game.showSettingsModal());
         document.getElementById('backToMenuBtn').addEventListener('click', () => this.game.showMenuView('main'));
@@ -53,22 +56,23 @@ export default class InputHandler {
         document.getElementById("btnHomeMeds").addEventListener("click", () => this.game.showHomeMedicationModal());
         document.getElementById("btnAnamnesis").addEventListener("click", () => this.game.showAnamnesis());
         document.getElementById('sendBtn').addEventListener('click', () => this.game.sendChatMessage());
+        document.getElementById('btnSomaetas').addEventListener('click', () => this.game.getSomaetasSummary());
 
         //Physical exam
         document.getElementById('btnPhysical').addEventListener('click', () => this.game.showPhysicalExamMenu());
-        document.getElementById("physicalExamMenu").addEventListener("click", (e) => this.handlePhysicalExamSelection(e));
+        document.getElementById("physicalExamList").addEventListener("click", (e) => this.handlePhysicalExamSelection(e));
 
         //Bedside
         document.getElementById('btnBedside').addEventListener('click', () => this.game.showBedsideMenu());
-        document.getElementById("bedsideMenu").addEventListener("click", (e) => this.handleBedsideTestSelection(e));
+        document.getElementById("bedsideTestList").addEventListener("click", (e) => this.handleBedsideTestSelection(e));
         document.getElementById('showEkgInterpretationBtn').addEventListener('click', () => this.game.showEkgInterpretation());
-        document.getElementById('closeEkgModal').addEventListener('click', () => ui.hideEkgModal());
+        document.getElementById('closeEkgModal').addEventListener('click', () => this.ui.hideEkgModal());
 
         //Lab
         document.getElementById("btnLab").addEventListener("click", () => this.game.showLabMenu());
         const labSearchInput = document.getElementById('labSearchInput');
         labSearchInput.addEventListener('input', (e) => this.game.filterLabTests(e.target.value));
-        document.getElementById("labMenu").addEventListener("click", (e) => this.handleLabSelection(e));
+        document.getElementById("labTestList").addEventListener("click", (e) => this.handleLabSelection(e));
 
         //Radiology
         document.getElementById('btnRadiology').addEventListener('click', () => this.game.showRadiologyMenu());
@@ -76,7 +80,7 @@ export default class InputHandler {
 
         // Medication
         document.getElementById('btnMeds').addEventListener('click', () => this.game.showMedsMenu());
-        document.getElementById("medsMenu").addEventListener("click", (e) => this.handleMedListClick(e));
+        document.getElementById("medsList").addEventListener("click", (e) => this.handleMedListClick(e));
         const medsSearchInput = document.getElementById('medsSearchInput');
         medsSearchInput.addEventListener('input', (e) => this.game.filterMedications(e.target.value));
             // Dosing
@@ -97,9 +101,9 @@ export default class InputHandler {
         });        
         document.getElementById('btnCancelDose').addEventListener('click', () => this.game.cancelDosing());
             //Oxygen
-        document.getElementById('oxygenSlider').addEventListener('input', (e) => ui.updateOxygenFlowRateLabel(e.target.value));
+        document.getElementById('oxygenSlider').addEventListener('input', (e) => this.ui.updateOxygenFlowRateLabel(e.target.value));
         document.getElementById('btnConfirmOxygen').addEventListener('click', () => this.game.confirmOxygen());
-        document.getElementById('btnCancelOxygen').addEventListener('click', () => ui.hideOxygenModal());
+        document.getElementById('btnCancelOxygen').addEventListener('click', () => this.ui.hideOxygenModal());
 
         // General Search Results
         document.getElementById('generalSearchMenu').addEventListener('click', (e) => {
@@ -122,22 +126,18 @@ export default class InputHandler {
         document.getElementById('btnDischarge').addEventListener('click', () => this.game.showDiagnosisModal());
         document.getElementById('diagnosisSearchInput').addEventListener('input', (e) => this.game.filterDiagnoses(e.target.value));
         document.getElementById('btnSkipDiagnosis').addEventListener('click', () => this.game.selectDiagnosis('No diagnosis given'));
-        document.getElementById('btnCancelDiagnosis').addEventListener('click', () => ui.hideDiagnosisModal());
-        document.getElementById('btnSendHome').addEventListener('click', () => this.game.chooseDisposition('Home'));
-        document.getElementById('btnAdmitWard').addEventListener('click', () => this.game.chooseDisposition('Ward'));
-        document.getElementById('btnTransferPCI').addEventListener('click', () => this.game.chooseDisposition('PCI'));       
+        document.getElementById('btnCancelDiagnosis').addEventListener('click', () => this.ui.hideDiagnosisModal());
         document.getElementById('diagnosisSelectionList').addEventListener('click', (e) => {
             const button = e.target.closest('button');
             if (button && button.dataset.diagnosis) {
                 this.game.selectDiagnosis(button.dataset.diagnosis);
             }
         });
-        document.getElementById('btnCancelDisposition').addEventListener('click', () => ui.hideDispositionModal());
 
         // Prescription Modal
         document.getElementById('prescriptionSearchInput').addEventListener('input', (e) => this.game.filterPrescriptions(e.target.value));
         document.getElementById('btnConfirmPrescription').addEventListener('click', () => this.game.confirmPrescriptions());
-        document.getElementById('btnCancelPrescription').addEventListener('click', () => ui.hidePrescriptionModal());
+        document.getElementById('btnCancelPrescription').addEventListener('click', () => this.ui.hidePrescriptionModal());
         document.getElementById('prescriptionSelectionList').addEventListener('change', (e) => {
             if (e.target.type === 'checkbox') {
                 const medId = e.target.dataset.id;
@@ -166,7 +166,7 @@ export default class InputHandler {
             }
         });
         document.getElementById('btnConfirmAdmissionPlan').addEventListener('click', () => this.game.confirmAdmissionPlan());
-        document.getElementById('btnCancelAdmissionPlan').addEventListener('click', () => ui.hideAdmissionPlanModal());
+        document.getElementById('btnCancelAdmissionPlan').addEventListener('click', () => this.ui.hideAdmissionPlanModal());
         document.getElementById('btnFooterCancelAdmissionPlan').addEventListener('click', () => {
             document.getElementById('admissionPlanModal').classList.remove('visible');
         });
@@ -242,6 +242,14 @@ export default class InputHandler {
             this.game.showMenuView('main');
         });
 
+        // Patch Notes Modal
+        document.getElementById('closePatchNotesBtn').addEventListener('click', () => {
+            document.getElementById('patchNotesModal').classList.remove('visible');
+        });
+        document.getElementById('backToMenuFromPatchNotesBtn').addEventListener('click', () => {
+            document.getElementById('patchNotesModal').classList.remove('visible');
+            this.game.showMenuView('main');
+        });
         // Settings Modal
         document.getElementById('closeSettingsBtn').addEventListener('click', () => {
             document.getElementById('settingsModal').classList.remove('visible');
@@ -282,52 +290,45 @@ export default class InputHandler {
         //Feedback
         document.getElementById('closeFeedback').addEventListener('click', () => this.game.closeFeedbackReport());
         document.getElementById('btnFinishFeedback').addEventListener('click', () => {
-            if (this.game.caseHasBeenRated) {
-                this.game.closeFeedbackReport(); // Skip rating if already rated
-            } else {
-                this.game.showRatingModal(); // Show rating modal if not rated
-            }
+            this.game.showRatingModal(); // Always show the rating modal
         });
 
         // --- Rating Modal Logic ---
-        const starContainer = document.getElementById('starRatingContainer');
-        const submitRatingBtn = document.getElementById('btnSubmitRating');
+        const starContainer = document.getElementById('starRatingStars');
 
-        document.getElementById('starRatingContainer').addEventListener('mouseover', (e) => {
+        starContainer.addEventListener('mouseover', (e) => {
             if (e.target.classList.contains('star')) {
                 starContainer.querySelectorAll('.star').forEach(star => {
                     star.textContent = star.dataset.value <= e.target.dataset.value ? '★' : '☆';
                 });
             }
         });
-        document.getElementById('starRatingContainer').addEventListener('mouseout', () => {
-            const selectedRating = parseInt(starContainer.dataset.rating || 0);
+        starContainer.addEventListener('mouseout', () => {
             starContainer.querySelectorAll('.star').forEach(star => {
-                star.textContent = star.dataset.value <= selectedRating ? '★' : '☆';
+                star.textContent = '☆'; // Always reset to empty stars on mouseout
             });
         });
-        document.getElementById('starRatingContainer').addEventListener('click', (e) => {
+        starContainer.addEventListener('click', (e) => {
             if (e.target.classList.contains('star')) {
                 const rating = parseInt(e.target.dataset.value, 10);
-                starContainer.dataset.rating = rating; // Store the selected rating
-                submitRatingBtn.disabled = false; // Enable the submit button
-                // Make the selection "stick" visually
-                starContainer.querySelectorAll('.star').forEach(star => {
-                    star.classList.toggle('selected', star.dataset.value <= rating);
-                });
+                this.game.submitCaseRating(rating); // Submit rating immediately
             }
         });
-        submitRatingBtn.addEventListener('click', () => {
-            const rating = parseInt(starContainer.dataset.rating);
-            const feedbackText = document.getElementById('ratingFeedbackText').value;
-            this.game.submitCaseRating(rating, feedbackText);
+
+        // --- Text Feedback Modal Logic ---
+        const feedbackTextarea = document.getElementById('ratingFeedbackText');
+        const submitFeedbackBtn = document.getElementById('btnSubmitTextFeedback');
+
+        // Disable the button whenever the textarea is empty
+        feedbackTextarea.addEventListener('input', () => {
+            submitFeedbackBtn.disabled = feedbackTextarea.value.trim().length === 0;
         });
-        document.getElementById('btnSkipRating').addEventListener('click', () => {
-            // Hide the rating modal first, then close the report
-            document.getElementById('ratingModal').classList.remove('visible');
-            this.game.closeFeedbackReport(); // Skip rating and just close
+
+        submitFeedbackBtn.addEventListener('click', () => {
+            const feedbackText = feedbackTextarea.value;
+            this.game.submitFeedbackText(feedbackText);
         });
-        document.getElementById('btnCancelDisposition').addEventListener('click', () => ui.hideDispositionModal());
+        document.getElementById('btnSkipTextFeedback').addEventListener('click', () => this.game.finishRatingProcess()); // This button is for skipping
         document.querySelector('.feedback-tabs').addEventListener('click', (e) => {
             if (e.target.matches('.tab-link')) {
                 const tabId = e.target.dataset.tab;
@@ -357,11 +358,6 @@ export default class InputHandler {
             }
         });
 
-
-
-    
-
-        
         // Add any other button listeners here in the same way.
     }
 
@@ -487,13 +483,4 @@ export default class InputHandler {
         this.game.handleMedicationSelection(medId);
     }
     }
-
-
-
-
-
-
-
-
-
 }
