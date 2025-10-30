@@ -33,9 +33,24 @@ export function hideAllSideMenus() {
     document.getElementById("medsMenu").style.display = "none";
     document.getElementById("bedsideMenu").style.display = "none";
     document.getElementById("radiologyMenu").style.display = "none";
+    document.getElementById("consultMenu").style.display = "none"; // NEW
     document.getElementById("generalSearchMenu").style.display = "none";
+    document.getElementById("akutrumMenu").style.display = "none";
     const feedbackModal = document.getElementById('feedbackModal');
     if (feedbackModal) feedbackModal.classList.remove('visible');
+}
+
+export function showSubtleNotification(message) {
+    const notification = document.getElementById('subtleNotification');
+    const notificationText = document.getElementById('subtleNotificationText');
+    notificationText.textContent = message;
+    notification.classList.remove('hidden');
+    notification.classList.add('visible');
+}
+
+export function hideSubtleNotification() {
+    const notification = document.getElementById('subtleNotification');
+    notification.classList.remove('visible');
 }
 
 export function showVitalsPopup(patient, vitalKeys, standardFindings, allRadiologyTests, allMedications, allBedsideTests, isZoomedOut = false) {
@@ -77,7 +92,16 @@ export function showVitalsPopup(patient, vitalKeys, standardFindings, allRadiolo
     // Clear the vitals content
     vitalsContent.innerHTML = '';
 
+    // --- NEW: Akutrum Logic ---
+    // Check if the patient is in the Akutrum (Room 4)
+    const isInAkutrum = patient.assignedRoom && patient.assignedRoom.name === 'Room 4';
+
     vitalKeys.forEach(key => {
+        // If in Akutrum, only show vitals that have been measured.
+        if (isInAkutrum && !(patient.measuredVitals && patient.measuredVitals.has(key))) {
+            return; // Skip this vital if it hasn't been measured
+        }
+
         if (vitalsSource[key] === undefined && key !== 'BT' && key !== 'Temp') return;
         
         const dataRow = document.createElement('div');
@@ -145,7 +169,8 @@ export function updateAndOpenAccordion(patient, type, data = {}) {
         lab: { el: document.getElementById('labResultsContent'), data: patient.orderedLabs, renderer: renderLabResults },
         bedside: { el: document.getElementById('bedsideTestContent'), data: patient.performedBedsideTests, renderer: renderBedsideResults },
         radiology: { el: document.getElementById('radiologyResultsContent'), data: patient.orderedRadiology, renderer: renderRadiologyResults },
-        meds: { el: document.getElementById('administeredMedsContent'), data: patient.administeredMeds, renderer: renderAdministeredMeds }
+        meds: { el: document.getElementById('administeredMedsContent'), data: patient.administeredMeds, renderer: renderAdministeredMeds },
+        interventions: { el: document.getElementById('interventionsContent'), data: patient.interventions, renderer: (container, data) => renderAccordionItems(patient, 'interventionsContent', data, (key, value) => renderSimpleResult(key, value)) }
     };
 
     const info = contentMap[type];
@@ -206,8 +231,14 @@ function renderLabResults(container, data) {
                 const grid = document.createElement('div');
                 grid.className = 'abg-grid';
                 if (resultData.result && resultData.result.components) {
-                    resultData.result.components.forEach(component => {
-                        grid.innerHTML += `<span>${component.label}</span><span class="${component.isAbnormal ? 'abnormal' : ''}">${component.value}</span>`;
+                    resultData.result.components.forEach(component => { // The label now includes the colon
+                        const labelSpan = document.createElement('span');
+                        labelSpan.textContent = component.label;
+                        const valueSpan = document.createElement('span');
+                        valueSpan.className = component.isAbnormal ? 'abnormal' : '';
+                        valueSpan.textContent = `${component.value.number} ${component.value.unit}`.trim();
+                        grid.appendChild(labelSpan);
+                        grid.appendChild(valueSpan);
                     });
                 }
                 valueSpan.appendChild(grid);
@@ -423,6 +454,47 @@ export function renderMedicationButtons(meds, containerId) {
     });
 }
 
+// --- NEW: Render Consultation Buttons ---
+export function renderConsultationButtons(consultations, containerId) {
+    const container = document.getElementById(containerId);
+    container.innerHTML = '';
+    if (!consultations) return;
+
+    consultations.forEach(consult => {
+        const button = document.createElement('button');
+        button.textContent = consult.name;
+        button.dataset.specialityId = consult.id;
+        container.appendChild(button);
+    });
+}
+
+let bubbleTimeout = null; // To manage the auto-hide timer
+
+/**
+ * Shows a speech bubble with the consultant's response.
+ * The bubble automatically hides after a delay.
+ * @param {string} specialityName - The name of the speciality (e.g., "Cardiology").
+ * @param {string} responseText - The text response from the consultant.
+ */
+export function showConsultationBubble(specialityName, responseText) {
+    const bubble = document.getElementById('consultationBubble');
+    const title = document.getElementById('consultationBubbleTitle');
+    const content = document.getElementById('consultationBubbleContent');
+
+    if (bubble && title && content) {
+        title.textContent = `From: ${specialityName}`;
+        content.textContent = responseText;
+        bubble.classList.remove('hidden');
+        bubble.classList.add('visible');
+
+        // Clear any existing timer and set a new one to hide the bubble
+        if (bubbleTimeout) clearTimeout(bubbleTimeout);
+        bubbleTimeout = setTimeout(() => bubble.classList.remove('visible'), 5000); // Hide after 5 seconds
+    } else {
+        console.error("Consultation bubble elements not found!");
+    }
+}
+
 export function hideEkgModal() {
     document.getElementById('ekgModal').classList.remove('visible');
 }
@@ -566,9 +638,19 @@ export function updateHomeMedicationListUI(patient, allMedications) {
 export function showFeedbackReport(result) {
     document.getElementById('finalScore').textContent = `${result.finalScore}%`;
     document.getElementById('scoreCircle').style.setProperty('--score-percent', `${result.finalScore}%`);
-    document.getElementById('utredning').innerHTML = result.utredningHTML;
-    document.getElementById('åtgärder').innerHTML = result.åtgärderHTML;
-    document.getElementById('fallbeskrivning').innerHTML = `<p>${result.fallbeskrivning || 'No case summary available.'}</p>`;
+    document.getElementById('utredning').innerHTML = result.utredningHTML || '';
+    document.getElementById('åtgärder').innerHTML = result.åtgärderHTML || '';
+
+    // --- REVISED FIX: Robustly handle all newline variations for paragraphs ---
+    const description = result.fallbeskrivning || 'No case summary available.';
+    // Replace one or more newlines with paragraph tags. This handles both single and double Enters.
+    const formattedDescription = description.split(/\n+/).map(p => {
+        let processedParagraph = p.trim();
+        // --- NEW: Convert markdown-style bold text to <strong> tags ---
+        processedParagraph = processedParagraph.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+        return `<p>${processedParagraph}</p>`;
+    }).join('');
+    document.getElementById('fallbeskrivning').innerHTML = formattedDescription;
 
     const diagnosisDisplay = document.getElementById('correctDiagnosisDisplay');
     diagnosisDisplay.querySelector('span').textContent = result.correctDiagnosis;
@@ -625,7 +707,8 @@ export function showSubmenu(menuIdToShow) {
         'chatWindow',
         'medsMenu',
         'bedsideMenu',
-        'radiologyMenu'
+        'radiologyMenu',
+        'consultMenu' // NEW
     ];
 
     // First, hide all submenus
@@ -642,6 +725,7 @@ export function showSubmenu(menuIdToShow) {
 
     // Show the requested menu, using flex for the chat window
     menuToShow.style.display = (menuIdToShow === 'chatWindow') ? 'flex' : 'block';
+    console.log(`[DEBUG] 4. showSubmenu() is showing '${menuIdToShow}'.`);
 }
 
 export function renderCaseHistory(history, getActionNameById, getActionCategory) {
@@ -668,6 +752,7 @@ export function renderCaseHistory(history, getActionNameById, getActionCategory)
         if (!item) return;
 
         const scorePercent = item.score || 0;
+        const scoreColor = getScoreColor(scorePercent);
         tableHTML += `
             <tr class="history-main-row" data-row-id="${index}">
                 <td class="history-patient-cell">
@@ -681,7 +766,7 @@ export function renderCaseHistory(history, getActionNameById, getActionCategory)
                 <td class="score-cell">
                     <div class="score-cell-content">
                         <span>${scorePercent}%</span>
-                        <div class="score-circle-small" style="--score-percent: ${scorePercent}%">
+                        <div class="score-circle-small" style="--score-percent: ${scorePercent}%; --good-score-color: ${scoreColor};">
                             <span>${scorePercent}</span>
                         </div>
                     </div>
@@ -808,7 +893,7 @@ function renderSimpleResult(key, value, normalFinding) {
 
     } else {
         // Existing logic for all other simple results.
-        isAbnormal = value && value !== normalFinding && !String(value).includes('Pending');
+        isAbnormal = normalFinding && value && value !== normalFinding && !String(value).includes('Pending');
     }
 
     if (isAbnormal) {
@@ -889,7 +974,9 @@ export function renderSelectedActionTags(targetId, jsonString, allActions) {
             const action = allActions.find(a => a.id === item);
             if (action) {
                 tag.textContent = action.name;
-                tag.classList.add(`tag-${action.category.toLowerCase().replace(/\s+/g, '-')}`);
+                // --- FIX: Add a fallback for actions without a category to prevent crashes ---
+                const categoryClass = (action.category || 'unknown').toLowerCase().replace(/\s+/g, '-');
+                tag.classList.add(`tag-${categoryClass}`);
             }
         }
         container.appendChild(tag);

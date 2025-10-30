@@ -1,5 +1,5 @@
 import { renderSelectedActionTags, renderHomeMedList, renderAnamnesisChecklist, populateAdmissionPlanUI, renderAdmissionPlanMeds } from '../common/ui.js';
-import { initActionSelector, openActionSelector } from './actionSelector.js';
+import { initActionSelector, openLegacyActionSelector, openConsultationActionSelector } from './actionSelector.js';
 import { initAdmissionPlanManager } from './admissionPlanManager.js';
 import { API_URL as BASE_API_URL } from '../api.js'; // Import the dynamic base URL
 import { initAnamnesisManager } from './anamnesisManager.js';
@@ -20,6 +20,7 @@ const patientAvatarPreview = document.getElementById('patientAvatarPreview');
 
 let allPatients = [];
 let allActions = [];
+let allConsultations = []; // NEW: To store specialities
 
 async function fetchAndRenderPatients() {
     try {
@@ -55,8 +56,27 @@ async function fetchAllActions() {
         const response = await fetch(`${API_URL}/all-actions`, { credentials: 'include' });
         if (!response.ok) throw new Error('Failed to fetch actions');
         allActions = await response.json();
+        // --- DEBUG: Log received actions and check a sample ---
+        console.log(`[FRONTEND-DEBUG] Received ${allActions.length} actions from the server.`);
+        const sampleAction = allActions.find(a => a.id === 'blodtryck');
+        console.log("[FRONTEND-DEBUG] Sample 'blodtryck' action as received by the client:", sampleAction);
+        // --- NEW DEBUG ---
+        const fastAction = allActions.find(a => a.id === 'ultraljud-fast');
+        console.log("[FRONTEND-DEBUG] Sample 'ultraljud-fast' action as received by the client:", fastAction);
+
+        // ---
     } catch (error) {
         console.error("Failed to fetch all actions:", error);
+    }
+}
+
+async function fetchAllConsultations() {
+    try {
+        const response = await fetch(`${BASE_API_URL}/api/game-data`); // Use the base URL
+        const gameData = await response.json();
+        allConsultations = gameData.allConsultations || [];
+    } catch (error) {
+        console.error("Failed to fetch consultation data:", error);
     }
 }
 
@@ -105,8 +125,17 @@ function populateForm(patient) {
         document.getElementById('Läkemedelslista').value = '[]';
         document.getElementById('ChildPrompt').value = '';
         document.getElementById('ParentPrompt').value = '';
+        document.getElementById('Consultations').value = '{}'; // Clear consultations
+        document.getElementById('consultationBuilder').innerHTML = ''; // Clear builder UI
+        document.getElementById('consultantList').innerHTML = ''; // Clear list of active consultants
+
         patientIdField.value = '';
         return;
+    }
+
+    // --- FIX: Explicitly clear dynamically added fields before populating ---
+    if (document.getElementById('AmbulanceReport')) {
+        document.getElementById('AmbulanceReport').value = patient.AmbulanceReport || '';
     }
 
     // Clear action containers before populating
@@ -117,6 +146,11 @@ function populateForm(patient) {
 
     // Explicitly populate the Anamnesis prompt field from the 'Prompt' key.
     document.getElementById('Anamnesis').value = patient.Prompt || '';
+
+    // --- FIX: Explicitly set Fallbeskrivning as it's also dynamic ---
+    if (document.getElementById('Fallbeskrivning')) {
+        document.getElementById('Fallbeskrivning').value = patient.Fallbeskrivning || '';
+    }
 
     Object.keys(patient).forEach(key => {
         // We've already handled the 'Prompt' -> 'Anamnesis' mapping manually.
@@ -129,6 +163,16 @@ function populateForm(patient) {
         if (key === 'patient_avatar') {
             displayImagePreview(patient[key]);
             return; // Skip the rest of the loop for this key
+        }
+
+        // --- FIX: Manually handle dynamically added Akutrum fields ---
+        // These fields are not in the original HTML, so a simple getElementById doesn't work
+        // until after they are added by the DOMContentLoaded event.
+        if (key === 'isAkutrumCase') {
+            document.getElementById('isAkutrumCase').checked = patient[key];
+        }
+        if (key === 'AmbulanceReport') {
+            document.getElementById('AmbulanceReport').value = patient[key] || '';
         }
 
         const element = document.getElementById(key);
@@ -149,39 +193,162 @@ function populateForm(patient) {
                 renderAnamnesisChecklist(checklist);
             } else if (key === 'Läkemedelslista') {
                 renderHomeMedList(patient[key], allActions);
+            } else if (key === 'Consultations') {
+                element.value = patient[key] || '{}'; // Populate the hidden input
+                renderConsultantList(); // Render the list of consultants with rules
             }
 
             // For all elements that are not checkboxes, attempt to set their value.
             if (element.type !== 'checkbox' && patient[key] != null) {
                 element.value = patient[key];
             }
-        } else {
-            // If there's no direct form element, it might be an abnormal finding
-            if (key === 'EKG_finding_text' || key === 'EKG_image_filename') {
-                if (document.getElementById('abnormalFindingsBedside Test') && !document.getElementById('abnormalFindingsBedside Test').querySelector('.ekg-item')) {
-                     const ekgAction = allActions.find(a => a.id === 'ekg');
-                     if (ekgAction) {
-                         addFindingItem('Bedside Test', ekgAction, {
-                             finding: patient.EKG_finding_text,
-                             image: patient.EKG_image_filename
-                         });
-                     }
-                }
-            } else {
-                const action = allActions.find(a => a.id.toLowerCase() === key.toLowerCase());
-                if (action) {
+        } else if (!['ekg_finding_text', 'ekg_image_filename', '_id', '__v'].includes(key.toLowerCase())) {
+            // --- FIX: This block now correctly handles all non-EKG abnormal findings ---
+            // The previous logic was flawed and skipped most of these.
+            console.log(`[DEBUG] No element for key "${key}". Treating as a potential abnormal finding.`);
+
+            const lowerCaseKey = key.toLowerCase();
+            let action = allActions.find(a => a.id.toLowerCase() === lowerCaseKey);
+
+            // If no direct match, check if it's a legacy physical exam by name
+            if (!action) {
+                action = allActions.find(a => a.category === 'Physical Exam' && a.name.toLowerCase() === lowerCaseKey);
+            }
+
+            if (action) {
+                console.log(`%c[DEBUG] Found matching action for key "${key}":`, 'color: lightgreen', action);
+                // Determine which container to add the finding to.
+                // Prioritize the ABCDE category if it's a specific ABCDE action.
+                if (action.isAbcdeSpecific && action.abcdeCategory && action.abcdeCategory.length > 0) {
+                    console.log(`[DEBUG] -> Placing in ABCDE section (isAbcdeSpecific is true).`);
+                    // --- FIX: If an action is in multiple categories (e.g., A and D), just use the first one to place the item. ---
+                    addFindingItem(action.abcdeCategory[0], action, patient[key]);
+                } else {
+                    console.log(`[DEBUG] -> Placing in standard Abnormal Findings section (Category: ${action.category}).`);
                     addFindingItem(action.category, action, patient[key]);
                 }
+            } else {
+                console.log(`%c[DEBUG] No matching action found for key "${key}". This finding will not be displayed.`, 'color: orange');
             }
         }
     });
+
+    // --- FIX: Handle EKG as a special case after the main loop ---
+    if (patient.EKG_finding_text || patient.ekg_finding_text || patient.EKG_image_filename || patient.ekg_image_filename) {
+        const ekgAction = allActions.find(a => a.id === 'ekg');
+        if (ekgAction && !document.querySelector('#abnormalFindingsBedside\\ Test .ekg-item')) {
+            addFindingItem('Bedside Test', ekgAction, {
+                finding: patient.EKG_finding_text || patient.ekg_finding_text,
+                image: patient.EKG_image_filename || patient.ekg_image_filename
+            });
+        }
+    }
 
     patientIdField.value = patient._id;
     btnDeleteCase.classList.remove('hidden');
 }
 
+function renderConsultantList() {
+    const consultantListContainer = document.getElementById('consultantList');
+    consultantListContainer.innerHTML = '';
+    const consultationData = JSON.parse(document.getElementById('Consultations').value || '{}');
+
+    Object.keys(consultationData).forEach(specialityId => {
+        const speciality = allConsultations.find(c => c.id === specialityId);
+        if (speciality) {
+            const item = document.createElement('div');
+            item.className = 'consultant-list-item';
+            item.textContent = speciality.name;
+            item.dataset.id = specialityId;
+            consultantListContainer.appendChild(item);
+        }
+    });
+}
+
+function buildConsultationUI(specialityId) {
+    const builder = document.getElementById('consultationBuilder');
+    const consultationData = JSON.parse(document.getElementById('Consultations').value || '{}');
+    const rules = consultationData[specialityId] || [];
+    const defaultRule = rules.find(r => r.default);
+
+    builder.innerHTML = `
+        <div class="consultation-rule">
+            <h5>Default Response</h5>
+            <textarea class="consultation-default-response" placeholder="This response is used if no other conditions are met...">${defaultRule ? defaultRule.default : ''}</textarea>
+        </div>
+        <div id="consultationRulesContainer"></div>
+        <button type="button" id="btnAddConsultationRule" class="btn btn-secondary">Add Conditional Response</button>
+    `;
+
+    const rulesContainer = document.getElementById('consultationRulesContainer');
+    rules.filter(r => r.condition).forEach(rule => {
+        addRuleUI(rulesContainer, rule);
+    });
+
+    document.getElementById('btnAddConsultationRule').addEventListener('click', () => addRuleUI(rulesContainer));
+}
+
+function addRuleUI(container, rule = null) {
+    const ruleDiv = document.createElement('div');
+    ruleDiv.className = 'consultation-rule';
+
+    const requiresActions = rule?.condition?.requires || [];
+    const missingActions = rule?.condition?.missing || [];
+
+    ruleDiv.innerHTML = `
+        <h5>
+            Conditional Response
+            <button type="button" class="btn-remove" title="Remove this rule">×</button>
+        </h5>
+        <div class="form-group">
+            <label>IF these actions have been performed:</label>
+            <div class="selected-actions-container requires-actions">
+                ${requiresActions.map(id => `<div class="action-tag">${allActions.find(a => a.id === id)?.name || id}</div>`).join('')}
+            </div>
+            <button type="button" class="btn btn-secondary btn-select-actions" data-target="requires">Select Required Actions</button>
+        </div>
+        <div class="form-group">
+            <label>AND these actions have NOT been performed:</label>
+            <div class="selected-actions-container missing-actions">
+                ${missingActions.map(id => `<div class="action-tag">${allActions.find(a => a.id === id)?.name || id}</div>`).join('')}
+            </div>
+            <button type="button" class="btn btn-secondary btn-select-actions" data-target="missing">Select Missing Actions</button>
+        </div>
+        <div class="form-group">
+            <label>THEN give this response:</label>
+            <textarea class="consultation-conditional-response" placeholder="The consultant will say this if the conditions are met...">${rule?.response || ''}</textarea>
+        </div>
+    `;
+    container.appendChild(ruleDiv);
+
+    ruleDiv.querySelector('.btn-remove').addEventListener('click', () => ruleDiv.remove());
+
+    ruleDiv.querySelectorAll('.btn-select-actions').forEach(button => {
+        button.addEventListener('click', (e) => {
+            const targetType = e.target.dataset.target; // 'requires' or 'missing'
+            const actionContainer = ruleDiv.querySelector(`.${targetType}-actions`);
+            openConsultationActionSelector((selectedIds) => { // FIX: Call the correct function for consultation builder
+                actionContainer.innerHTML = selectedIds.map(id => `<div class="action-tag">${allActions.find(a => a.id === id)?.name || id}</div>`).join('');
+                actionContainer.dataset.actions = JSON.stringify(selectedIds);
+            });
+        });
+    });
+
+    const requiresContainer = ruleDiv.querySelector('.requires-actions');
+    const missingContainer = ruleDiv.querySelector('.missing-actions');
+    requiresContainer.dataset.actions = JSON.stringify(requiresActions);
+    missingContainer.dataset.actions = JSON.stringify(missingActions);
+}
+
 async function savePatient(e) {
     e.preventDefault();
+
+    // --- NEW: Serialize consultation builder UI to JSON ---
+    const activeConsultantId = document.getElementById('consultantSelect').value;
+    if (activeConsultantId) {
+        saveCurrentConsultationToState(activeConsultantId);
+    }
+    // ---
 
     const formData = new FormData();
     const id = patientIdField.value;
@@ -204,12 +371,17 @@ async function savePatient(e) {
         if (element.type === 'checkbox') {
             formData.append(normalizedId, element.checked);
         } else if (element.classList.contains('finding-input')) {
-            // This is an abnormal finding input. It is handled by the dedicated
-            // logic below, so we skip it here to prevent it from being saved twice.
-            return;
+            // This is an abnormal finding. Handle based on type.
+            const actionId = (element.dataset.actionId || '').normalize('NFC');
+            if (element.type === 'checkbox') {
+                // For binary tests, save the boolean checked state
+                formData.append(actionId, element.checked);
+            } else {
+                // For all other findings, save the text value
+                formData.append(actionId, element.value.trim());
+            }
         } else if (element.id === 'AdmissionPlanSolution') {
-            // This field is handled separately later, so we explicitly skip it here
-            // to avoid appending it twice.
+            // Skip this; it's handled in the special section below.
             return;
         } else if (element.value !== undefined) {
             formData.append(normalizedId, element.value);
@@ -243,24 +415,6 @@ async function savePatient(e) {
     } catch {}
     const medications = currentPlan.medications || [];
     formData.append('AdmissionPlanSolution', JSON.stringify({ monitoring, medications }));
-
-    // --- 3. Gather abnormal findings ---
-    document.querySelectorAll('.finding-input-item').forEach(item => {
-        if (item.classList.contains('ekg-item')) {
-            const findingInput = item.querySelector('#EKG_finding_text_dynamic');
-            const imageInput = item.querySelector('#EKG_image_filename_dynamic');
-            if (findingInput && findingInput.value.trim()) formData.append('EKG_finding_text', findingInput.value);
-            if (imageInput && imageInput.value.trim()) formData.append('EKG_image_filename', imageInput.value);
-        } else {
-            const input = item.querySelector('.finding-input');
-            if (input && input.value.trim()) {
-                // ✅ FIX: Normalize the action ID from the dataset to prevent character encoding issues.
-                // This was the missing piece.
-                const normalizedActionId = (input.dataset.actionId || '').normalize('NFC');
-                formData.append(normalizedActionId, input.value.trim());
-            }
-        }
-    });
 
     // --- 4. Handle Avatar File ---
     if (selectedAvatarFile) {
@@ -377,7 +531,11 @@ function addFindingItem(category, action, value = '') {
 
     // Add listener to the new remove button
     itemDiv.querySelector('.btn-remove').addEventListener('click', () => {
-        itemDiv.remove();
+        // Instead of removing the element, hide it and clear its value.
+        // This ensures the empty value is sent to the server on save.
+        const input = itemDiv.querySelector('.finding-input');
+        if (input) input.value = '';
+        itemDiv.classList.add('hidden');
     });
 }
 
@@ -414,11 +572,126 @@ function clearAvatarPreview() {
     selectedAvatarFile = null;
 }
 
+function saveCurrentConsultationToState(specialityId) {
+    const builder = document.getElementById('consultationBuilder');
+    if (!builder.innerHTML) return;
+
+    const consultationData = JSON.parse(document.getElementById('Consultations').value || '{}');
+    const rules = [];
+
+    // Save default response
+    const defaultResponse = builder.querySelector('.consultation-default-response').value.trim();
+    if (defaultResponse) {
+        rules.push({ default: defaultResponse });
+    }
+
+    // Save conditional rules
+    builder.querySelectorAll('#consultationRulesContainer .consultation-rule').forEach(ruleDiv => {
+        const requires = JSON.parse(ruleDiv.querySelector('.requires-actions').dataset.actions || '[]');
+        const missing = JSON.parse(ruleDiv.querySelector('.missing-actions').dataset.actions || '[]');
+        const response = ruleDiv.querySelector('.consultation-conditional-response').value.trim();
+
+        if (response && (requires.length > 0 || missing.length > 0)) {
+            rules.push({ condition: { requires, missing }, response });
+        }
+    });
+
+    consultationData[specialityId] = rules;
+    document.getElementById('Consultations').value = JSON.stringify(consultationData, null, 2);
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
     await Promise.all([
         fetchAndRenderPatients(),
-        fetchAllActions()
+        fetchAllActions(),
+        fetchAllConsultations() // NEW
+
     ]);
+
+    // --- NEW: Consultation Builder Logic ---
+    const consultantSelect = document.getElementById('consultantSelect');
+    allConsultations.forEach(c => {
+        const option = document.createElement('option');
+        option.value = c.id;
+        option.textContent = c.name;
+        consultantSelect.appendChild(option);
+    });
+
+    consultantSelect.addEventListener('change', (e) => {
+        const selectedId = e.target.value;
+        buildConsultationUI(selectedId);
+    });
+
+    document.getElementById('consultantList').addEventListener('click', (e) => {
+        if (e.target.classList.contains('consultant-list-item')) {
+            const specialityId = e.target.dataset.id;
+            consultantSelect.value = specialityId;
+            buildConsultationUI(specialityId);
+        }
+    });
+
+    // --- REVISED: Sidebar Collapse/Expand Logic ---
+    const sidebars = document.querySelectorAll('.admin-sidebar');
+    sidebars.forEach(sidebar => {
+        const sidebarContent = document.createElement('div');
+        sidebarContent.className = 'admin-sidebar-content';
+
+        // Move all existing children of the sidebar into the new content wrapper
+        while (sidebar.firstChild) {
+            sidebarContent.appendChild(sidebar.firstChild);
+        }
+        sidebar.appendChild(sidebarContent);
+
+        // Create and add the toggle button to the sidebar
+        const toggleBtn = document.createElement('button');
+        toggleBtn.className = 'btn-sidebar-toggle';
+        toggleBtn.innerHTML = '&#9664;'; // Left arrow
+        toggleBtn.title = 'Collapse Sidebar';
+        sidebar.appendChild(toggleBtn);
+
+        toggleBtn.addEventListener('click', () => {
+            const isCollapsed = sidebar.classList.toggle('collapsed');
+            toggleBtn.innerHTML = isCollapsed ? '&#9654;' : '&#9664;'; // Right/Left arrow
+        });
+    });
+
+    // --- NEW: Dynamically add the missing Fallbeskrivning field ---
+    const patientInfoSection = document.querySelector('.form-section .form-grid');
+    if (patientInfoSection && !document.getElementById('Fallbeskrivning')) {
+        const fallbeskrivningGroup = document.createElement('div');
+        fallbeskrivningGroup.className = 'form-group';
+        fallbeskrivningGroup.style.gridColumn = '1 / -1'; // Make it span the full width
+
+        fallbeskrivningGroup.innerHTML = `
+            <label for="Fallbeskrivning">Fallbeskrivning (Case Description)</label>
+            <textarea id="Fallbeskrivning" rows="4" placeholder="A short summary of the case for the feedback report..."></textarea>
+        `;
+
+        // Insert it after the 'Diagnosis' field for logical grouping
+        const diagnosisField = document.getElementById('Diagnosis')?.parentElement;
+        patientInfoSection.insertBefore(fallbeskrivningGroup, diagnosisField ? diagnosisField.nextSibling : null);
+    }
+
+    // --- NEW: Dynamically add Akutrum-specific fields ---
+    if (patientInfoSection && !document.getElementById('isAkutrumCase')) {
+        const akutrumGroup = document.createElement('div');
+        akutrumGroup.className = 'form-group';
+        akutrumGroup.innerHTML = `
+            <label for="isAkutrumCase" style="display: flex; align-items: center; gap: 10px;">
+                <input type="checkbox" id="isAkutrumCase" style="width: auto;">
+                Is this an Akutrum (pre-arrival) case?
+            </label>
+        `;
+        const ambulanceReportGroup = document.createElement('div');
+        ambulanceReportGroup.className = 'form-group';
+        ambulanceReportGroup.style.gridColumn = '1 / -1';
+        ambulanceReportGroup.innerHTML = `
+            <label for="AmbulanceReport">Ambulance Pre-arrival Report</label>
+            <textarea id="AmbulanceReport" rows="4" placeholder="Enter the pre-arrival report from the ambulance..."></textarea>
+        `;
+        patientInfoSection.appendChild(akutrumGroup);
+        patientInfoSection.appendChild(ambulanceReportGroup);
+    }
 
     fetchAndRenderActivePatients();
     setInterval(fetchAndRenderActivePatients, 3000); // Refresh active patients every 3 seconds
@@ -430,6 +703,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     patientList.addEventListener('click', (e) => {
         if (e.target.classList.contains('patient-list-item')) {
             const patient = allPatients.find(p => p._id === e.target.dataset.id);
+            populateForm(null); // --- FIX: Clear the form completely before populating it ---
             populateForm(patient);
         }
     });
@@ -486,7 +760,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.querySelectorAll('.btn-select-actions').forEach(button => {
         button.addEventListener('click', (e) => {
             console.log(`[DEBUG] '${e.target.textContent}' button clicked. Calling openActionSelector with target:`, e.target.dataset.target);
-            openActionSelector(e.target.dataset.target);
+            // --- MODIFIED: Pass a callback for the simplified selector ---
+            const targetId = e.target.dataset.target;
+            if (targetId === 'requires' || targetId === 'missing') {
+                // This is a simplified call for the consultation builder, handled in admin.js
+            } else {
+                openLegacyActionSelector(targetId); // Original behavior for Critical/Recommended
+            }
         });
     });
 
@@ -496,28 +776,62 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     document.querySelectorAll('.finding-search-input').forEach(input => {
-        input.addEventListener('input', (e) => {
+        const handleSearch = (e) => {
             const searchTerm = e.target.value.toLowerCase();
             const category = e.target.dataset.category;
             const resultsContainer = e.target.nextElementSibling;
-            resultsContainer.innerHTML = '';
 
-            if (searchTerm.length < 1) return;
+            let actionsForCategory;
+            // If the category is A, B, C, D, or E, filter by the new `abcdeCategory` property.
+            if (['A', 'B', 'C', 'D', 'E'].includes(category)) {
+                // --- DEBUG: Log what's being filtered ---
+                console.log(`[FRONTEND-DEBUG] Searching ABCDE category '${category}' for term '${searchTerm}'`);
 
-            const actionsForCategory = allActions.filter(a => a.category === category && a.name.toLowerCase().includes(searchTerm));
+                // --- FIX: Filter based on the `isAbcdeSpecific` flag from the server ---
+                // This correctly shows only actions that have their findings defined in ABCDE.xlsx.
+                actionsForCategory = allActions.filter(a => 
+                    a.isAbcdeSpecific &&                                // Must be an ABCDE-specific action
+                    a.abcdeCategory.includes(category) &&               // Must belong to the correct letter (A, B, C...)
+                    a.name.toLowerCase().includes(searchTerm)           // Must match the search term
+                );
+                console.log(`[FRONTEND-DEBUG] Found ${actionsForCategory.length} matching actions.`);
+                // ---
+            } else {
+                // Otherwise, use the original category filtering.
+                // --- NEW DEBUGGING ---
+                console.log(`[DEBUG] Searching standard category '${category}' for term '${searchTerm}'`);
+                const sampleAction = allActions.find(a => a.name === 'Hjärta');
+                console.log(`[DEBUG] Sample 'Hjärta' action has category:`, sampleAction?.category);
 
-            actionsForCategory.slice(0, 5).forEach(action => {
+                actionsForCategory = allActions.filter(a => a.category === category && a.name.toLowerCase().includes(searchTerm));
+                console.log(`[DEBUG] Found ${actionsForCategory.length} matching actions for this category.`);
+                // ---
+            }
+
+            // --- NEW: Show all results if search is empty, otherwise slice ---
+            const resultsToShow = searchTerm.length > 0 ? actionsForCategory.slice(0, 5) : actionsForCategory;
+            resultsContainer.innerHTML = ''; // Clear previous results
+
+            resultsToShow.forEach(action => {
                 const resultItem = document.createElement('div');
                 resultItem.className = 'search-result-item';
                 resultItem.textContent = action.name;
                 resultItem.addEventListener('click', () => {
                     addFindingItem(category, action);
                     input.value = '';
-                    resultsContainer.innerHTML = '';
+                    resultsContainer.style.display = 'none'; // Hide after selection
                 });
                 resultsContainer.appendChild(resultItem);
             });
-        });
+
+            // Show the results container if there are items to show
+            resultsContainer.style.display = resultsToShow.length > 0 ? 'block' : 'none';
+        };
+
+        input.addEventListener('input', handleSearch);
+        input.addEventListener('focus', handleSearch);
+        // Hide results when user clicks away, with a delay to allow item clicks
+        input.addEventListener('blur', (e) => setTimeout(() => { e.target.nextElementSibling.style.display = 'none'; }, 150));
     });
 
     // --- Login Modal Logic ---

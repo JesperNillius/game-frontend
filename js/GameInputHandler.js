@@ -38,9 +38,9 @@ export default class GameInputHandler {
         document.getElementById("playBtn").addEventListener("click", () => this.game.startGame());
         document.getElementById('btnReturnToMenu').addEventListener('click', () => this.game.returnToMenu());
         document.getElementById('caseHistoryBtn').addEventListener('click', () => this.game.showCaseHistory());
-        document.getElementById('patchNotesBtn').addEventListener('click', () => this.game.showPatchNotes());
         document.getElementById('leaderboardBtn').addEventListener('click', () => this.game.showLeaderboard());
         document.getElementById('settingsBtn').addEventListener('click', () => this.game.showSettingsModal());
+        document.getElementById('patchNotesBtn').addEventListener('click', () => this.game.showPatchNotes());
         document.getElementById('backToMenuBtn').addEventListener('click', () => this.game.showMenuView('main'));
         document.getElementById('loginForm').addEventListener('submit', (e) => this.handleLogin(e));
         document.getElementById('registerForm').addEventListener('submit', (e) => this.handleRegister(e));
@@ -54,6 +54,7 @@ export default class GameInputHandler {
         // Anamnesis
         document.getElementById('generalSearchInput').addEventListener('input', (e) => this.game.searchAllActions(e.target.value));
         document.getElementById("btnHomeMeds").addEventListener("click", () => this.game.showHomeMedicationModal());
+        document.getElementById("btnAnamnesisAkutrum").addEventListener("click", () => this.game.showAnamnesis());
         document.getElementById("btnAnamnesis").addEventListener("click", () => this.game.showAnamnesis());
         document.getElementById('sendBtn').addEventListener('click', () => this.game.sendChatMessage());
         document.getElementById('btnSomaetas').addEventListener('click', () => this.game.getSomaetasSummary());
@@ -80,8 +81,31 @@ export default class GameInputHandler {
 
         // Medication
         document.getElementById('btnMeds').addEventListener('click', () => this.game.showMedsMenu());
+        document.getElementById('btnMedsAkutrum').addEventListener('click', () => this.game.showMedsMenu());
         document.getElementById("medsList").addEventListener("click", (e) => this.handleMedListClick(e));
         const medsSearchInput = document.getElementById('medsSearchInput');
+
+        // --- NEW: Consultation Listeners ---
+        document.getElementById('btnConsult').addEventListener('click', () => this.game.showConsultMenu());
+        document.getElementById('btnConsultAkutrum').addEventListener('click', () => this.game.showConsultMenu());
+        console.log('[DEBUG] Attaching consult menu listener to #consultMenu');
+        document.getElementById('consultMenu').addEventListener('click', (e) => {
+            console.log('[DEBUG] Click detected inside #consultMenu');
+            const button = e.target.closest('button');
+            console.log('[DEBUG] Found button:', button);
+            if (button && button.dataset.specialityId) {
+                console.log(`[DEBUG] Button has specialityId: ${button.dataset.specialityId}. Calling handleConsultation.`);
+                this.game.handleConsultation(button.dataset.specialityId, button);
+            } else {
+                console.log('[DEBUG] Clicked element was not a valid consultation button.');
+            }
+        });
+
+        // --- NEW: Consultation Bubble Close Button ---
+        document.getElementById('closeConsultationBubble').addEventListener('click', () => {
+            document.getElementById('consultationBubble').classList.remove('visible');
+        });
+
         medsSearchInput.addEventListener('input', (e) => this.game.filterMedications(e.target.value));
             // Dosing
         document.getElementById('dosingModal').addEventListener('click', (e) => {
@@ -116,7 +140,7 @@ export default class GameInputHandler {
             // Map the category to the main action button's ID
             const categoryToButtonId = {
                 exam: 'btnPhysical', lab: 'btnLab', bedside: 'btnBedside',
-                radiology: 'btnRadiology', med: 'btnMeds'
+                radiology: 'btnRadiology', med: 'btnMeds', consult: 'btnConsult' // NEW
             };
 
             document.getElementById(categoryToButtonId[category])?.click();
@@ -124,6 +148,8 @@ export default class GameInputHandler {
 
         //Discharge patient
         document.getElementById('btnDischarge').addEventListener('click', () => this.game.showDiagnosisModal());
+        document.getElementById('btnDischargeAkutrum').addEventListener('click', () => this.game.showDiagnosisModal());
+        document.getElementById('btnContinueFromAkutrum').addEventListener('click', () => this.game.continueFromAkutrum());
         document.getElementById('diagnosisSearchInput').addEventListener('input', (e) => this.game.filterDiagnoses(e.target.value));
         document.getElementById('btnSkipDiagnosis').addEventListener('click', () => this.game.selectDiagnosis('No diagnosis given'));
         document.getElementById('btnCancelDiagnosis').addEventListener('click', () => this.ui.hideDiagnosisModal());
@@ -193,6 +219,17 @@ export default class GameInputHandler {
             }
         });
 
+        // --- NEW: Akutrum Intro Modal Listeners ---
+        document.getElementById('confirmAkutrumIntro').addEventListener('click', () => {
+            const checkbox = document.getElementById('dontShowAkutrumIntroAgain');
+            if (checkbox.checked) {
+                // Save the setting if the user checked the box
+                this.game.playerManager.saveSettings({ showAkutrumIntro: false });
+            }
+            document.getElementById('akutrumIntroModal').classList.remove('visible'); // FIX: Remove visible class
+            document.getElementById('akutrumIntroModal').classList.add('hidden'); // Add hidden class back
+        });
+
 
         document.getElementById('planVitalsFreq').addEventListener('click', (e) => {
             // Make sure we clicked a button
@@ -242,6 +279,47 @@ export default class GameInputHandler {
             this.game.showMenuView('main');
         });
 
+        // --- REVISED: Akutrum Arrival Flow ---
+        // 1. Click the subtle notification to open the report
+        document.getElementById('subtleNotification').addEventListener('click', () => {
+            const patientData = this.game.pendingAkutrumPatient;
+            if (patientData) {
+                this.ui.hideSubtleNotification();
+                document.getElementById('ambulanceReportContent').textContent = patientData.AmbulanceReport || "No report available.";
+                document.getElementById('ambulanceReportModal').classList.add('visible');
+            }
+        });
+
+        // 2. Acknowledge the report, which starts the arrival timer
+        document.getElementById('btnAcknowledgeArrival').addEventListener('click', () => {
+            document.getElementById('ambulanceReportModal').classList.remove('visible');
+            
+            // 3. After a delay, spawn the patient and THEN show the notification
+            setTimeout(async () => {
+                const spawnResult = await this.game.characterManager.spawnAkutrumPatient(); // Spawn the patient first
+
+                // --- FIX: Show the correct notification based on the result ---
+                if (spawnResult === 'spawned_in_akutrum') {
+                    this.ui.showSubtleNotification("The patient has arrived in the Akutrum.");
+                } else if (spawnResult === 'diverted_to_waiting_room') {
+                    this.ui.showSubtleNotification("Akutrum occupied. Ambulance patient sent to waiting room.");
+                }
+
+                // 4. After another short delay, hide the notification
+                setTimeout(() => {
+                    this.ui.hideSubtleNotification();
+                }, 4000); // Let the notification stay on screen for 4 seconds
+            }, 5000); // "Arrived" message appears 5 seconds after acknowledging the report
+        });
+
+        // Settings Modal
+        document.getElementById('closeSettingsBtn').addEventListener('click', () => {
+            document.getElementById('settingsModal').classList.remove('visible');
+        });
+        document.getElementById('saveSettingsBtn').addEventListener('click', () => {
+            this.game.saveSettings();
+        });
+
         // Patch Notes Modal
         document.getElementById('closePatchNotesBtn').addEventListener('click', () => {
             document.getElementById('patchNotesModal').classList.remove('visible');
@@ -250,13 +328,7 @@ export default class GameInputHandler {
             document.getElementById('patchNotesModal').classList.remove('visible');
             this.game.showMenuView('main');
         });
-        // Settings Modal
-        document.getElementById('closeSettingsBtn').addEventListener('click', () => {
-            document.getElementById('settingsModal').classList.remove('visible');
-        });
-        document.getElementById('saveSettingsBtn').addEventListener('click', () => {
-            this.game.saveSettings();
-        });
+
 
 
         // Home Medication Modal
@@ -371,7 +443,7 @@ export default class GameInputHandler {
         const cssY = e.clientY - rect.top;
         
         const worldCoords = utils.screenToWorld(cssX, cssY, this.game.camera);
-        this.game.handleMouseDown(worldCoords, e.button);
+        this.game.handleMouseDown(worldCoords, e);
     }
 
     handleMouseMove(e) {
@@ -384,7 +456,7 @@ export default class GameInputHandler {
     }
 
     handleMouseUp(e) {
-        this.game.handleMouseUp(); // Tell the manager
+        this.game.handleMouseUp(e); // Tell the manager
     }
 
     handleDblClick(e) {
@@ -393,7 +465,7 @@ export default class GameInputHandler {
         const cssY = e.clientY - rect.top;
 
         const worldCoords = utils.screenToWorld(cssX, cssY, this.game.camera);
-        this.game.handleDblClick(worldCoords);
+        this.game.handleDblClick(worldCoords, e);
     }
 
 

@@ -49,7 +49,14 @@ export function drawHospitalLayout(rooms, walls, glowingRooms, images, scenery) 
   const wallColor = '#D1D1D1';
 
   rooms.forEach(room => {
-    ctx.fillStyle = (room.name.startsWith("Room") && !room.isOccupied) ? availableColor : floorColor;
+    // --- REVISED: Akutrum is always red for dramatic effect ---
+    if (room.name === 'Room 4') {
+        ctx.fillStyle = '#8B3A3A'; // A distinct, constant red for the Akutrum
+    } else if (room.name.startsWith("Room") && !room.isOccupied) {
+        ctx.fillStyle = availableColor; // Default green for available rooms
+    } else {
+        ctx.fillStyle = floorColor; // Default beige for occupied/other rooms
+    }
     ctx.fillRect(room.x - 1, room.y - 1, room.w + 2, room.h + 2);
   });
 
@@ -59,8 +66,18 @@ export function drawHospitalLayout(rooms, walls, glowingRooms, images, scenery) 
       const centerY = room.y + room.h / 2;
       const radius = Math.min(room.w, room.h);
       const gradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, radius);
-      gradient.addColorStop(0, '#51873C');
-      gradient.addColorStop(1, 'rgba(76, 175, 80, 0)');
+
+      // --- NEW: Use a different highlight color for the Akutrum ---
+      if (room.name === 'Room 4') {
+        // A lighter, more vibrant red for the highlight
+        gradient.addColorStop(0, '#C06161'); 
+        gradient.addColorStop(1, 'rgba(192, 97, 97, 0)');
+      } else {
+        // The existing green highlight for all other rooms
+        gradient.addColorStop(0, '#5fa046ff');
+        gradient.addColorStop(1, 'rgba(81, 135, 60, 0)');
+      }
+
       ctx.fillStyle = gradient;
       ctx.fillRect(room.x, room.y, room.w, room.h);
     });
@@ -111,7 +128,7 @@ export function drawHospitalLayout(rooms, walls, glowingRooms, images, scenery) 
 
 export function drawPatients(patients) {
     for (const p of patients) {
-      if (p.showTriageGlow && p.triageLevel) {
+      if (p.showTriageGlow && p.triageLevel && p.assignedRoom === null) { // Only show glow if in waiting room
           const glowRadius = p.radius * 2.5;
           const gradient = ctx.createRadialGradient(p.x, p.y, p.radius * 0.8, p.x, p.y, glowRadius);
           let glowColorRgb;
@@ -148,6 +165,67 @@ export function drawPatients(patients) {
       const patientName = p.name || p.Name || p.Namn || "Unknown";
       ctx.fillText(patientName, p.x, p.y - size / 2 - 6);
     }
+}
+
+export function drawSpeechBubble(bubbleCenterX, bubbleCenterY, text, patientX, patientY, patientRadius) {
+    // --- Bubble Style ---
+    const bubblePadding = 8; // Further reduced padding for a smaller bubble
+    const bubbleRadius = 8;
+    const tailHeight = 10;
+    
+    // --- NEW: Dynamic Dot Animation ---
+    // If the text is '...', we animate it. Otherwise, we draw the static text.
+    if (text === '...') {
+        const now = performance.now();
+        const cycleDuration = 1200; // Total cycle time in milliseconds
+        const elapsedInCycle = now % cycleDuration;
+
+        if (elapsedInCycle > 800) text = '...';
+        else if (elapsedInCycle > 400) text = '..';
+        else text = '.';
+    }
+    // --- End of New Logic ---
+
+    // --- Text Style ---
+    ctx.font = 'bold 18px Arial'; // Smaller font size
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+
+    // --- Calculate Dimensions ---
+    const textMetrics = ctx.measureText(text);
+    const bubbleWidth = textMetrics.width + bubblePadding * 2;
+    const bubbleHeight = 20 + bubblePadding; // Further reduced height
+
+    // --- NEW: Make the tail width dynamic ---
+    const tailWidth = Math.min(15, bubbleWidth * 0.4); // Tail is 80% of bubble width, or 15px max
+
+    const bubbleX = bubbleCenterX - bubbleWidth / 2;
+    const bubbleY = bubbleCenterY - bubbleHeight / 2;
+    
+    // --- Draw Bubble ---
+    ctx.fillStyle = '#555'; // Match the anamnesis chat bubble color
+
+    // --- NEW: Draw a rounded rectangle with one sharp corner (bottom-right) to act as a tail ---
+    ctx.beginPath();
+    ctx.moveTo(bubbleX + bubbleRadius, bubbleY);
+    ctx.lineTo(bubbleX + bubbleWidth - bubbleRadius, bubbleY);
+    ctx.quadraticCurveTo(bubbleX + bubbleWidth, bubbleY, bubbleX + bubbleWidth, bubbleY + bubbleRadius); // Top-right corner
+
+    // This is the sharp bottom-right corner that points toward the patient
+    ctx.lineTo(bubbleX + bubbleWidth, bubbleY + bubbleHeight); 
+
+    ctx.lineTo(bubbleX + bubbleRadius, bubbleY + bubbleHeight);
+    ctx.quadraticCurveTo(bubbleX, bubbleY + bubbleHeight, bubbleX, bubbleY + bubbleHeight - bubbleRadius); // Bottom-left corner
+
+    ctx.lineTo(bubbleX, bubbleY + bubbleRadius);
+    ctx.quadraticCurveTo(bubbleX, bubbleY, bubbleX + bubbleRadius, bubbleY); // Top-left corner
+    ctx.closePath();
+    ctx.fill();
+    // No stroke for a flat look
+    
+    // --- Draw Text ---
+    ctx.fillStyle = 'white';
+    ctx.fillText(text, bubbleCenterX, bubbleCenterY);
 }
 
 

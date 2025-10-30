@@ -55,10 +55,17 @@ body {
     background-color: var(--admin-bg-secondary);
     border-right: 1px solid var(--admin-border-color);
     padding: 20px;
-    overflow-y: auto;
     display: flex;
     flex-direction: column;
     gap: 20px;
+    overflow-y: hidden; /* Hide vertical scrollbar, we'll handle it inside */
+    transition: width 0.3s ease; /* Smooth transition for collapsing */
+    position: relative; /* Needed for positioning the collapse button */
+}
+
+.admin-sidebar-content {
+    height: 100%;
+    overflow-y: auto;
 }
 
 .admin-main-content {
@@ -143,7 +150,7 @@ body {
 
 .form-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
     gap: 15px 20px;
 }
 
@@ -321,6 +328,7 @@ textarea {
 .action-tag.tag-lab-test { background-color: #f39c12; color: #111; }
 .action-tag.tag-radiology { background-color: #8e44ad; }
 .action-tag.tag-medication { background-color: #c0392b; }
+.action-tag.tag-consultation { background-color: #16a085; } /* New color for consultations */
 .action-tag.tag-or-group { background-color: #6c757d; border: 1px dashed #aaa; }
 
 .keyword-tag {
@@ -352,12 +360,13 @@ textarea {
 
 .search-results {
     position: absolute;
+    display: none; /* Initially hidden */
     background-color: var(--admin-bg-secondary);
     border: 1px solid var(--admin-border-color);
     border-radius: 4px;
     width: 100%;
     z-index: 10;
-    max-height: 200px;
+    max-height: 250px; /* Allow more height for the full list */
     overflow-y: auto;
 }
 
@@ -459,9 +468,9 @@ textarea {
 
 /* --- Abnormal Findings --- */
 .findings-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 20px;
+    display: grid; /* Changed to a 5-column layout for better alignment */
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 25px;
 }
 
 .findings-container {
@@ -732,4 +741,50 @@ textarea {
     border-radius: var(--admin-border-radius);
     margin-top: 15px;
     border: 1px solid var(--admin-border-color);
+}
+
+
+.admin-sidebar-content {
+    height: 100%;
+    overflow-y: auto;
+}
+
+.checkbox-label.is-in-other-category::after {
+    background-color: #a34141; /* Red for more important categories */
+}
+
+/* --- Sidebar Collapse Styles --- */
+.admin-sidebar.collapsed {
+    width: 45px; /* The width of the collapsed sidebar */
+    padding: 10px;
+}
+
+.admin-sidebar.collapsed .admin-sidebar-content {
+    display: none; /* Hide all the content when collapsed */
+}
+
+.btn-sidebar-toggle {
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80%;
+    padding: 8px 0;
+    background-color: #3c3c42;
+    border: 1px solid var(--admin-border-color);
+    color: #ccc;
+    cursor: pointer;
+    border-radius: var(--admin-border-radius);
+    font-size: 1.2em;
+    transition: background-color 0.2s ease;
+}
+
+.btn-sidebar-toggle:hover {
+    background-color: #4a4a4a;
+}
+
+.admin-sidebar.collapsed .btn-sidebar-toggle {
+    width: 30px; /* Make the button smaller in collapsed view */
+    height: 30px;
+    padding: 0; /* Remove padding to center the arrow */
 }

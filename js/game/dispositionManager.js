@@ -13,6 +13,7 @@ export default class DispositionManager {
         document.getElementById('btnAdmitWard').addEventListener('click', () => this.chooseDisposition('Ward'));
         document.getElementById('btnTransferPCI').addEventListener('click', () => this.chooseDisposition('PCI'));
         document.getElementById('btnTransferTrombolys').addEventListener('click', () => this.chooseDisposition('Trombolys'));
+        document.getElementById('btnPrepareSurgery').addEventListener('click', () => this.chooseDisposition('Surgery'));
         document.getElementById('btnCancelDisposition').addEventListener('click', () => this.ui.hideDispositionModal());
     }
 
@@ -93,8 +94,19 @@ export default class DispositionManager {
             listContainer.innerHTML = '';
             const medsInPlan = new Set();
 
-            if (currentPatient && currentPatient.Läkemedelslista && currentPatient.Läkemedelslista.length > 0) {
-                currentPatient.Läkemedelslista.forEach(homeMed => {
+            // --- FIX: Ensure Läkemedelslista is an array before using .forEach ---
+            // It can sometimes be a JSON string, which needs to be parsed first.
+            let homeMedList = [];
+            if (currentPatient && currentPatient.Läkemedelslista) {
+                if (typeof currentPatient.Läkemedelslista === 'string') {
+                    try { homeMedList = JSON.parse(currentPatient.Läkemedelslista); } catch (e) { console.error("Failed to parse Läkemedelslista", e); }
+                } else if (Array.isArray(currentPatient.Läkemedelslista)) {
+                    homeMedList = currentPatient.Läkemedelslista;
+                }
+            }
+
+            if (homeMedList.length > 0) {
+                homeMedList.forEach(homeMed => { 
                     const medInfo = this.game.allMedications.find(m => m.id === homeMed.medId);
                     const isPaused = currentPatient.homeMedicationState && currentPatient.homeMedicationState[homeMed.medId]?.paused;
                     if (!medInfo) return;

@@ -9,6 +9,7 @@ import CharacterManager from './game/characterManager.js';
 import PlayerManager from './game/playerManager.js';
 import ActionManager from './game/actionManager.js';
 import DispositionManager from './game/dispositionManager.js';
+import AbcdeManager from './game/abcdeManager.js'; // Import the new manager
 
 export default class GameMainController {
     constructor() {
@@ -31,6 +32,7 @@ export default class GameMainController {
         this.lastDragY = 0;
         this.statusPollTimer = null;
         this.spawnTimer = null;
+        this.pendingAkutrumPatient = null; // For the new feature
 
         // --- Game Config & Data ---
         this.camera = { x: canvas.worldWidth / 2, y: canvas.worldHeight / 2, zoom: 1.0 };
@@ -43,10 +45,13 @@ export default class GameMainController {
         this.allRadiologyTests = [];
         this.standardFindings = {};
         this.vitalKeys = ["AF", "Saturation", "Puls", "BT", "Temp", "RLS"];
+        this.allConsultations = []; // NEW
+        this.abcdeActions = {};
         this.allPrescriptions = [];
         this.medicationContext = null; 
         this.allDiagnoses = [];
         this.selectedPrescriptions = new Set();
+        this.userSettings = {}; // NEW: To store user preferences
         // --- Hospital Layout Data ---
         this.rooms = [
         // Waiting Room (tall, on the right) - RESIZED
@@ -68,6 +73,8 @@ export default class GameMainController {
         // Corridor (long, in the middle) - RESIZED
         { x: 20, y: 260, w: 1040, h: 170, name: "Korridor", furniture: [
             { x: 0, y: -10, w: 100, image: 'kruka2',},
+            { x: 500, y: 15, w: 50, image: 'kruka',},
+            { x: 200, y: 139, w: 40, h: 40, image: 'trashcan' }
         ] },
 
         // --- TOP ROW ---
@@ -82,29 +89,44 @@ export default class GameMainController {
 
         // Top row of patient rooms - MOVED DOWN from y: 30 to y: 50
         { x: 300, y: 50, w: 240, h: 210, name: "Room 1", furniture: [
+            { x: 1, y: 6, w: 92, h: 210, image: 'interior2' },
             { x: 168, y: 30, w: 70, h: 85, image: 'patientBed' }
         ]},
         { x: 560, y: 50, w: 240, h: 210, name: "Room 2", furniture: [
+            // --- NEW: Add the custom interior image for Room 2 ---
+            { x: 1, y: 6, w: 97, h: 210, image: 'interior1' },
             { x: 168, y: 30, w: 70, h: 85, image: 'patientBed' }
         ]},
         { x: 820, y: 50, w: 220, h: 210, name: "Room 3", furniture: [
-            { x: 148, y: 30, w: 70, h: 85, image: 'patientBed' }
+            { x: 148, y: 30, w: 70, h: 85, image: 'patientBed' },
+            { x: 0, y: 0, w: 90, h: 85, image: 'armchair4' },
+            { x: 1, y: 120, w: 25, h: 60, image: 'sink' },
+            { x: 60, y: 187, w: 8, h: 30, image: 'handsprit' }
         ]},
-
         // --- BOTTOM ROW ---
-
         // Bottom row of patient rooms - MOVED DOWN from y: 420 to y: 440
         { x: 20, y: 430, w: 240, h: 210, name: "Room 4", furniture: [
-            { x: 168, y: 40, w: 70, h: 85, image: 'patientBed' }
+            // --- NEW: Add the custom interior image for the Akutrum ---
+            // It's placed first so other furniture (like the bed) is drawn on top.
+            { x: 0, y: 11, w: 241, h: 210, image: 'akutrum' },
+            { x: 88, y: 40, w: 70, h: 85, image: 'patientBed' },
         ]},
         { x: 280, y: 430, w: 240, h: 210, name: "Room 5", furniture: [
-            { x: 168, y: 40, w: 70, h: 85, image: 'patientBed' }
+            { x: 168, y: 40, w: 70, h: 85, image: 'patientBed' },
+            { x: 3, y: 110, w: 90, h: 85, image: 'armchair5' },
+            { x: 1, y: 25, w: 25, h: 60, image: 'sink' },
+            { x: 60, y: 11, w: 8, h: 30, image: 'handsprit', rotation: Math.PI }
         ]},
         { x: 540, y: 430, w: 240, h: 210, name: "Room 6", furniture: [
+            // --- NEW: Add the custom interior image for Room 6 ---
+            { x: 1, y: 11, w: 70, h: 210, image: 'interior3' },
             { x: 168, y: 40, w: 70, h: 85, image: 'patientBed' }
         ]},
         { x: 800, y: 430, w: 240, h: 210, name: "Room 7", furniture: [
-        { x: 168, y: 40, w: 70, h: 85, image: 'patientBed' }
+        { x: 168, y: 40, w: 70, h: 85, image: 'patientBed' },
+        { x: -10, y: 115, w: 100, h: 85, image: 'armchair6' },
+        { x: 1, y: 25, w: 25, h: 60, image: 'sink' },
+        { x: 60, y: 12, w: 8, h: 30, image: 'handsprit', rotation: Math.PI }
         ]},
         ];
         this.walls = [
@@ -195,6 +217,7 @@ export default class GameMainController {
         this.playerManager = new PlayerManager(this);
         this.actionManager = new ActionManager(this);
         this.dispositionManager = new DispositionManager(this);
+        this.abcdeManager = new AbcdeManager(this); // Initialize the new manager
 
 
         // --- Scenery Layout Data ---
@@ -214,6 +237,7 @@ export default class GameMainController {
 
         // ✅ Initialize managers that need to set up event listeners.
         this.dispositionManager.init();
+        this.abcdeManager.init();
 
         canvas.resizeCanvas();
         this.inputHandler.init(); // ✅ Initialize the input handler now that the DOM is ready.
@@ -235,13 +259,13 @@ export default class GameMainController {
             this.allLabKits = data.labKits;
             this.allBedsideTests = data.bedsideTests;
             this.allMedications = data.medications;
+            this.abcdeActions = data.abcdeActions; // Get the new data
             this.allRadiologyTests = data.radiologyTests;
             this.standardFindings = data.standardFindings;
             this.allPhysicalExams = data.physicalExams;
             this.allPrescriptions = data.allPrescriptions;
             this.allDiagnoses = data.allDiagnoses;
-            // --- CONSOLE LOG ---
-            console.log('[FRONTEND LOG] Game data loaded. Lab tests available:', this.allLabTests.length);
+            this.allConsultations = data.allConsultations; // NEW
 
         } catch (error) {
             console.error("Failed to load critical game data:", error);
@@ -268,6 +292,7 @@ export default class GameMainController {
             () => this.characterManager.updateParents(),
             () => this.characterManager.drawParents(),
             () => canvas.drawPatients(this.patients),
+            () => this.drawThinkingBubbles(), // Add new drawing function to the loop
         ]);
     }
         
@@ -293,9 +318,35 @@ export default class GameMainController {
     this.ui.updateCriticalWarning(anyPatientCritical); // Call the function from ui.js
     }
 
+    drawThinkingBubbles() {
+        // Combine patients and parents into a single list of characters who might be thinking
+        const allCharacters = [...this.patients, ...this.parents];
+        const thinkingCharacters = allCharacters.filter(c => c.isThinking);
+
+        if (thinkingCharacters.length === 0) return;
+
+        const now = performance.now();
+        const cycleDuration = 1200; // Total cycle time in milliseconds
+        const elapsedInCycle = now % cycleDuration;
+
+        let dots = '.';
+        if (elapsedInCycle > 800) {
+            dots = '...';
+        } else if (elapsedInCycle > 400) {
+            dots = '..';
+        }
+
+        thinkingCharacters.forEach(character => {
+            const radius = character.radius || 14; // Use character's radius or a default
+            const bubbleX = character.x - radius - 40;
+            const bubbleY = character.y - radius - 30;
+            canvas.drawSpeechBubble(bubbleX, bubbleY, dots, character.x, character.y, radius);
+        });
+    }
+
     async loadInitialAssets() {
         try {
-            const [kruka2, kruka, chair_to_right, chair_to_left, patientBed, skrivbord, tree1, treesnroads, nurseImg] = await Promise.all([
+            const [kruka2, kruka, chair_to_right, chair_to_left, patientBed, skrivbord, tree1, treesnroads, nurseImg, akutrumImg, interior1Img, interior2Img, interior3Img, armchair4, armchair5, armchair6, sink, handsprit, trashcan] = await Promise.all([
                 // ✅ Use the imported API_URL
                 utils.loadImage(`${API_URL}/images/kruka2.png`),
                 utils.loadImage(`${API_URL}/images/kruka.png`),
@@ -305,9 +356,19 @@ export default class GameMainController {
                 utils.loadImage(`${API_URL}/images/skrivbord.png`),
                 utils.loadImage(`${API_URL}/images/tree1.png`),
                 utils.loadImage(`${API_URL}/images/treesnroads.png`),
-                utils.loadImage(`${API_URL}/images/nurse.png`) // Load the nurse image
+                utils.loadImage(`${API_URL}/images/nurse.png`), // Load the nurse image
+                utils.loadImage(`${API_URL}/images/akutrum.png`), // Load the new Akutrum image
+                utils.loadImage(`${API_URL}/images/interior1.png`), // Load the interior1 image
+                utils.loadImage(`${API_URL}/images/interior2.png`), // Load the interior2 image for Room 1
+                utils.loadImage(`${API_URL}/images/interior3.png`), // Load the new interior3 image for Room 6
+                utils.loadImage(`${API_URL}/images/armchair4.png`),
+                utils.loadImage(`${API_URL}/images/armchair5.png`),
+                utils.loadImage(`${API_URL}/images/armchair6.png`),
+                utils.loadImage(`${API_URL}/images/sink.png`),
+                utils.loadImage(`${API_URL}/images/handsprit.png`),
+                utils.loadImage(`${API_URL}/images/trashcan.png`)
             ]);
-            this.images = { kruka2, kruka, chair_to_right, chair_to_left, patientBed, skrivbord, tree1, treesnroads, nurse: nurseImg };
+            this.images = { kruka2, kruka, chair_to_right, chair_to_left, patientBed, skrivbord, tree1, treesnroads, nurse: nurseImg, akutrum: akutrumImg, interior1: interior1Img, interior2: interior2Img, interior3: interior3Img, armchair4, armchair5, armchair6, sink, handsprit, trashcan };
 
             // Initialize the nurse character
             this.nurse = {
@@ -315,7 +376,8 @@ export default class GameMainController {
                 x: 180, y: 120, 
                 rotation: Math.PI / 2, // Start facing right
                 img: this.images.nurse,
-                state: 'idle', // 'idle', 'moving_to_patient', 'at_patient', 'returning'
+                akutrumPosition: { x: 75, y: 550 }, // <-- ADJUST THIS POSITION
+                state: 'idle', // 'idle', 'moving_to_patient', 'at_patient', 'returning', 'moving_to_akutrum'
                 path: [], // The path the nurse will follow
                 lastPatient: null // To remember who she was visiting
             };
@@ -328,19 +390,6 @@ export default class GameMainController {
     }
 
     async startGame() {
-      // --- [DEBUG] CHECK AUTH ON GAME START ---
-      console.log('--- [DEBUG] CHECKING AUTH STATUS ON startGame ---');
-      try {
-          const status = await api.checkAuthStatus();
-          if (status.user) {
-            console.log('[DEBUG] startGame auth check SUCCESS:', status.user);
-          } else {
-            console.log('[DEBUG] startGame auth check: No user is logged in.');
-          }
-      } catch (e) {
-          console.log('[DEBUG] startGame auth check: No user is logged in.');
-      }
-      // --- END DEBUG ---
       try {
         // Use the 'api' module for fetch calls
         await api.resetGame();
@@ -420,18 +469,56 @@ export default class GameMainController {
     // 3. Stop any previous vitals polling
     this.stopVitalsPolling();
 
+    console.log(`[DEBUG] Entering room view for: ${room.name}`);
+
+    // --- FIX: Check for Akutrum entry regardless of whether a patient is present ---
+    if (room.name === 'Room 4') { // Assuming "Room 4" is the Akutrum
+        console.log('[DEBUG] Akutrum detected. Checking settings to show intro modal.');
+        console.log('[DEBUG] Current userSettings:', this.userSettings);
+        // Show intro modal if it's the user's first time or they haven't opted out
+        if (this.userSettings && this.userSettings.showAkutrumIntro !== false) {
+            console.log('[DEBUG] -> Condition met. Showing modal.');
+            document.getElementById('akutrumIntroModal').classList.remove('hidden'); // FIX: Remove hidden class
+            document.getElementById('akutrumIntroModal').classList.add('visible'); // Add visible class
+        }
+        this.abcdeManager.showMenu();
+        this.characterManager.moveNurseToAkutrum(); // Tell the nurse to move
+    } else {
+        document.getElementById("akutrumMenu").style.display = "none";
+        document.getElementById("roomMenu").style.display = "block";
+    }
+
     // 4. If there's a patient, show their info and start new polling
     if (patient) {
         this.currentPatientId = patient.id;
         this.ui.showVitalsPopup(patient, this.vitalKeys, this.standardFindings, this.allRadiologyTests, this.allMedications, this.allBedsideTests);
-        document.getElementById("roomMenu").style.display = "block";
         this.statusPollTimer = setInterval(() => this.pollForVitals(patient.id), 3000);
     } else {
         // If the room is empty, hide the patient-specific UI
         this.currentPatientId = null;
         document.getElementById("roomMenu").style.display = "none";
+        document.getElementById("akutrumMenu").style.display = "none";
         // You may need a ui.hideVitalsPopup() function here if you have one
     }
+    }
+
+    continueFromAkutrum() {
+        const currentPatient = this.patients.find(p => p.id === this.currentPatientId);
+        if (!currentPatient) return;
+
+        // 1. Zoom out the camera
+        utils.animateZoom(this.camera, canvas.worldWidth / 2, canvas.worldHeight / 2, 1.0);
+
+        // 2. Hide all side menus and stop polling
+        this.ui.hideAllSideMenus();
+        this.stopVitalsPolling();
+
+        // 3. Set the current patient as the 'selectedPatient'
+        // This will make them glow and ready to be placed in a new room.
+        this.selectedPatient = currentPatient;
+
+        // 4. Show the top UI bar again
+        document.getElementById('top-ui-bar').classList.remove('hidden');
     }
 
     // ALLMÄNNA PATIENTFUNKTIONER
@@ -448,6 +535,43 @@ export default class GameMainController {
             localPatient.isFailed = statusData.isFailed;
             localPatient.isCritical = statusData.isCritical;
             localPatient.triageLevel = statusData.triageLevel;
+
+            // --- NEW: Check for updated lab results ---
+            // The server now sends the full lab list with each status update.
+            // We compare it to the local version to see if a delayed test was revealed.
+            if (statusData.orderedLabs && JSON.stringify(localPatient.orderedLabs) !== JSON.stringify(statusData.orderedLabs)) {
+                localPatient.orderedLabs = statusData.orderedLabs;
+                this.ui.updateAndOpenAccordion(localPatient, 'lab'); // Refresh the lab accordion
+            }
+
+            // --- NEW: Check for the final chat reply ---
+            if (statusData.lastChatReply) {
+                // Clear all thinking states
+                this.patients.forEach(p => p.isThinking = false);
+                this.parents.forEach(p => p.isThinking = false);
+
+                // Add the final message to the chat
+                this.ui.addChatMessage(statusData.lastChatReply.speaker, statusData.lastChatReply.reply);
+                if (localPatient) {
+                    localPatient.chatHistory = document.getElementById("chatMessages").innerHTML;
+                }
+
+                // --- NEW: Reveal RLS when the patient speaks in the Akutrum ---
+                const isInAkutrum = localPatient.assignedRoom && localPatient.assignedRoom.name === 'Room 4';
+                const patientRls = localPatient.currentVitals.RLS;
+                // Check if the speaker was the patient (not a parent) and if RLS is 1 or 2.
+                if (isInAkutrum && statusData.lastChatReply.speaker === localPatient.name && (patientRls === 1 || patientRls === 2)) {
+                    if (!localPatient.measuredVitals) localPatient.measuredVitals = new Set();
+                    
+                    // Only reveal and refresh if it hasn't been measured yet.
+                    if (!localPatient.measuredVitals.has('RLS')) {
+                        localPatient.measuredVitals.add('RLS');
+                        // Refresh the vitals popup to show the newly revealed vital.
+                        this.ui.showVitalsPopup(localPatient, this.vitalKeys, this.standardFindings, this.allRadiologyTests, this.allMedications, this.allBedsideTests);
+                    }
+                }
+                // The backend will clear lastChatReply after sending it.
+            }
             
             if (statusData.isFailed && !localPatient.hasBeenMarkedAsFailed) {
             localPatient.hasBeenMarkedAsFailed = true;
@@ -496,6 +620,10 @@ export default class GameMainController {
 
     // MOUSE
     handleMouseDown(coords, button) {
+        // The 'button' parameter from the original event is now passed as the second argument.
+        // Let's ensure we are correctly interpreting it. If 'button' is the event object, extract the button property.
+        const mouseButton = (typeof button === 'object' && button !== null) ? button.button : button;
+
         const mx = coords.x;
         const my = coords.y;
         this.patients.forEach(p => p.showTriageGlow = false);
@@ -503,8 +631,18 @@ export default class GameMainController {
             const clickedRoom = this.findRoomAt(mx, my);
             const glowingRooms = this.rooms.filter(r => r.name.startsWith("Room") && !this.isRoomOccupied(r));
             if (clickedRoom && glowingRooms.includes(clickedRoom)) {
-                this.selectedPatient.x = clickedRoom.x + clickedRoom.w / 2;
-                this.selectedPatient.y = clickedRoom.y + clickedRoom.h / 2;
+                // --- FIX: Replicate the bed-placement logic from handleMouseUp ---
+                const bed = clickedRoom.furniture.find(f => f.image === 'patientBed');
+                if (bed && clickedRoom.name !== 'Room 4') {
+                    // Position the patient in the middle of the bed furniture
+                    this.selectedPatient.x = clickedRoom.x + bed.x + (bed.w / 2);
+                    this.selectedPatient.y = clickedRoom.y + bed.y + (bed.h / 2) + 35;
+                } else { 
+                    // Fallback for Akutrum or rooms without a defined bed
+                    this.selectedPatient.x = clickedRoom.x + clickedRoom.w / 2;
+                    this.selectedPatient.y = clickedRoom.y + clickedRoom.h / 2;
+                }
+
                 this.selectedPatient.assignedRoom = clickedRoom;
                 this.currentPatientId = this.selectedPatient.id;
                 this.enterRoomView(clickedRoom, this.selectedPatient);
@@ -517,7 +655,7 @@ export default class GameMainController {
             const dx = mx - p.x, dy = my - p.y;
             if (Math.hypot(dx, dy) <= p.radius * 2) {
                 if (this.findRoomAt(p.x, p.y)?.name === "Väntrum") p.showTriageGlow = true;
-                if (button === 0) {
+                if (mouseButton === 0) { // Check for left-click
                     this.draggingPatient = p;
                     this.lastDragX = mx;
                     this.lastDragY = my;
@@ -532,7 +670,12 @@ export default class GameMainController {
                 return;
             }
         }
-        if (this.camera.zoom === 1) this.ui.hideAllSideMenus();
+        // --- FIX: Only hide menus if the click was on the canvas itself ---
+        // This prevents clicks on UI buttons from incorrectly closing menus.
+        const eventTarget = (typeof button === 'object' && button !== null) ? button.target : null;
+        if (this.camera.zoom === 1 && eventTarget && eventTarget.id === 'gameCanvas') {
+            this.ui.hideAllSideMenus();
+        }
     }
 
     handleMouseMove(coords) {
@@ -542,6 +685,16 @@ export default class GameMainController {
     if (!this.isDraggingFlag && Math.hypot(coords.x - this.dragStartX, coords.y - this.dragStartY) > 5) {
         this.isDraggingFlag = true;
         if (this.draggingPatient.assignedRoom) this.draggingPatient.assignedRoom = null;
+
+        // --- NEW: Make the parent follow the patient when dragging starts ---
+        // Find the parent associated with the patient being dragged.
+        const parent = this.parents.find(p => p.childId === this.draggingPatient.id);
+        if (parent) {
+            // Reset the parent's state. This will make them stop sitting in the
+            // armchair and trigger the "following" logic in the update loop.
+            parent.state = 'following'; // Set a clear state
+            parent.path = []; // Clear any old path
+        }
     }
 
     if (this.isDraggingFlag) {
@@ -560,16 +713,38 @@ export default class GameMainController {
     }
     }
 
-    handleMouseUp() {
+    handleMouseUp(e) {
+
     if (this.draggingPatient) {
         if (this.isDraggingFlag) {
             // Logic for dropping a dragged patient
             const dropRoom = this.findRoomAt(this.draggingPatient.x, this.draggingPatient.y);
             if (dropRoom && dropRoom.name.startsWith("Room") && !this.isRoomOccupied(dropRoom)) {
-                this.draggingPatient.x = dropRoom.x + dropRoom.w / 2;
-                this.draggingPatient.y = dropRoom.y + dropRoom.h / 2;
+                // --- NEW: Place patient on the bed, not in the center of the room ---
+                const bed = dropRoom.furniture.find(f => f.image === 'patientBed');
+                if (bed && dropRoom.name !== 'Room 4') { // Don't apply to Akutrum, keep it centered
+                    // Position the patient in the middle of the bed furniture
+                    this.draggingPatient.x = dropRoom.x + bed.x + (bed.w / 2);
+                    this.draggingPatient.y = dropRoom.y + bed.y + (bed.h / 2) + 35; // Added a 15px offset to move it lower
+                } else { // Fallback for Akutrum or rooms without a defined bed
+                    this.draggingPatient.x = dropRoom.x + dropRoom.w / 2;
+                    this.draggingPatient.y = dropRoom.y + dropRoom.h / 2;
+                }
                 this.currentPatientId = this.draggingPatient.id;
                 this.draggingPatient.assignedRoom = dropRoom;
+
+                // --- NEW: Check for a parent and move them to the armchair ---
+                const parent = this.parents.find(p => p.childId === this.draggingPatient.id);
+                if (parent) {
+                    this.characterManager.moveParentToArmchair(parent, dropRoom);
+                }
+                // ---
+
+                // --- NEW: Notify the backend about the room change ---
+                console.log(`[FRONTEND-DEBUG] Notifying backend: Patient ${this.draggingPatient.id} moved to room "${dropRoom.name}"`);
+                api.assignPatientToRoom(this.draggingPatient.id, dropRoom.name)
+                    .catch(err => console.error('[FRONTEND-ERROR] Failed to assign patient to room:', err));
+
                 this.enterRoomView(dropRoom, this.draggingPatient);
             } else {
                 this.draggingPatient.assignedRoom = null;
@@ -592,7 +767,13 @@ export default class GameMainController {
     this.isDraggingFlag = false;
     }
 
-    handleDblClick(coords) {
+    handleDblClick(coords, e) {
+        // --- FIX: Only allow double-click zoom if clicking on the canvas ---
+        const eventTarget = e.target || window.event.target;
+        if (eventTarget.id !== 'gameCanvas') {
+            return; // Do nothing if the double-click was on a UI element
+        }
+
         const zoomOut = () => {
             const topBar = document.getElementById('top-ui-bar');
             utils.animateZoom(this.camera, canvas.worldWidth / 2, canvas.worldHeight / 2, 1.0);
@@ -601,11 +782,17 @@ export default class GameMainController {
             this.stopVitalsPolling();
         };
 
-        if (this.camera.zoom > 1.0) {
+        if (this.camera.zoom > 1.0) { // If zoomed in, zoom out
             zoomOut();
         } else {
             const clickedRoom = this.findRoomAt(coords.x, coords.y);
             if (clickedRoom) {
+                // --- NEW: Prevent zooming into non-patient rooms ---
+                const nonZoomableRooms = ['Väntrum', 'Korridor', 'Läkarexpedition'];
+                if (nonZoomableRooms.includes(clickedRoom.name)) {
+                    return; // Do not zoom
+                }
+
                 const patientInRoom = this.patients.find(p => p.assignedRoom === clickedRoom);
                 this.enterRoomView(clickedRoom, patientInRoom);
             }
@@ -619,6 +806,11 @@ export default class GameMainController {
             if (visibleModal) {
                 visibleModal.classList.remove('visible');
             } else {
+            // --- NEW: Tell the nurse to return home when zooming out ---
+            if (this.camera.zoom > 1.0) {
+                this.characterManager.returnNurseToHome();
+            }
+
                 utils.animateZoom(this.camera, canvas.worldWidth / 2, canvas.worldHeight / 2, 1.0);
                 this.ui.hideAllSideMenus();
                 this.stopVitalsPolling();
@@ -683,6 +875,45 @@ export default class GameMainController {
         chatInput.value = 'SOMAÄTAS';
         // Trigger the existing send message function
         this.sendChatMessage();
+    }
+
+    // --- NEW: Consultation Logic ---
+    showConsultMenu() {
+        this.ui.renderConsultationButtons(this.allConsultations, 'consultList');
+        this.ui.showSubmenu('consultMenu');
+    }
+
+    async handleConsultation(specialityId, button) {
+        console.log(`[DEBUG] handleConsultation called with specialityId: ${specialityId}`);
+        const currentPatient = this.patients.find(p => p.id === this.currentPatientId);
+        if (!currentPatient) {
+            console.error('[DEBUG] handleConsultation failed: No currentPatient found.');
+            return;
+        }
+        console.log(`[DEBUG] Found current patient: ${currentPatient.name}`);
+
+        button.disabled = true;
+        button.textContent = 'Consulting...';
+        console.log('[DEBUG] Button disabled. Calling api.consultSpecialist...');
+
+        try {
+            const result = await api.consultSpecialist(currentPatient.id, specialityId, currentPatient.actionsTaken);
+            console.log('[DEBUG] API call successful. Response:', result);
+            // --- NEW: Show the consultation response in a speech bubble ---
+            this.ui.showConsultationBubble(result.specialityName, result.response);
+
+            // Add to actions taken so it can be evaluated in the final report
+            if (!currentPatient.actionsTaken.includes(specialityId)) {
+                currentPatient.actionsTaken.push(specialityId);
+            }
+        } catch (err) {
+            // This console.error was already here, but it's very important.
+            console.error('Failed to consult specialist:', err); 
+            this.ui.addChatMessage('System', 'Error: Could not contact specialist.');
+        } finally {
+            button.disabled = false; // Always re-enable the button
+            button.textContent = this.allConsultations.find(c => c.id === specialityId)?.name || 'Consult';
+        }
     }
 
         // STATUS
@@ -756,8 +987,7 @@ export default class GameMainController {
         this.ui.renderGeneralSearchResults(filteredActions, 'generalSearchResultList');
         this.ui.showSubmenu('generalSearchMenu');
     }
-
-
+    
     // FEEDBACK
     showRatingModal = () => this.dispositionManager.showRatingModal();
 

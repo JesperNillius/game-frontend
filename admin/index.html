@@ -32,6 +32,14 @@
                             <input type="number" id="age" step="0.1" required>
                         </div>
                         <div class="form-group">
+                            <label for="Kön">Gender</label>
+                            <select id="Kön" required>
+                                <option value="">-- Select Gender --</option>
+                                <option value="Man">Man</option>
+                                <option value="Kvinna">Kvinna</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
                             <label for="Kontaktorsak">Kontaktorsak</label>
                             <input type="text" id="Kontaktorsak">
                         </div>
@@ -98,6 +106,15 @@
                             <textarea id="ParentPrompt" rows="4"></textarea>
                         </div>
                         <div class="form-group">
+                            <label for="primarySpeaker">Primary Speaker (Pediatric)</label>
+                            <select id="primarySpeaker">
+                                <option value="default">Default (AI Router)</option>
+                                <option value="parent">Parent Only</option>
+                                <option value="child">Child Only</option>
+                            </select>
+                            <small style="color: #807e7c;">Overrides the default AI behavior for who answers questions.</small>
+                        </div>
+                        <div class="form-group">
                             <label>Anamnesis Checklist</label>
                             <div id="anamnesisChecklistContainer"></div>
                             <button type="button" id="btnAddAnamnesisQuestion" class="btn btn-secondary" style="margin-top: 10px;">Add Question</button>
@@ -111,6 +128,54 @@
                                 <div id="homeMedSearchResults" class="search-results"></div>
                             </div>
                             <input type="hidden" id="Läkemedelslista">
+                        </div>
+                    </div>
+                    <!-- NEW: Consultation Builder Section -->
+                    <div class="form-group form-group-full">
+                        <label>Consultation Logic</label>
+                        <div class="consultation-builder-container">
+                            <div class="consultation-sidebar">
+                                <label for="consultantSelect">Select Speciality</label>
+                                <select id="consultantSelect"></select>
+                                <div id="consultantList" class="consultant-list"></div>
+                            </div>
+                            <div id="consultationBuilder" class="consultation-builder">
+                                <!-- Dynamic content will be built here by admin.js -->
+                            </div>
+                        </div>
+                        <input type="hidden" id="Consultations">
+                    </div>
+
+                    <!-- End of New Section -->
+                </div>
+
+                <div class="form-section">
+                    <h3>ABCDE Findings (for Akutrum Cases)</h3>
+                    <div class="findings-grid">
+                        <div class="findings-column">
+                            <h4>A (Airway)</h4>
+                            <div class="search-container"><input type="text" class="finding-search-input" data-category="A" placeholder="Search A-actions..."><div class="search-results"></div></div>
+                            <div id="abnormalFindingsA" class="findings-container"></div>
+                        </div>
+                        <div class="findings-column">
+                            <h4>B (Breathing)</h4>
+                            <div class="search-container"><input type="text" class="finding-search-input" data-category="B" placeholder="Search B-actions..."><div class="search-results"></div></div>
+                            <div id="abnormalFindingsB" class="findings-container"></div>
+                        </div>
+                        <div class="findings-column">
+                            <h4>C (Circulation)</h4>
+                            <div class="search-container"><input type="text" class="finding-search-input" data-category="C" placeholder="Search C-actions..."><div class="search-results"></div></div>
+                            <div id="abnormalFindingsC" class="findings-container"></div>
+                        </div>
+                        <div class="findings-column">
+                            <h4>D (Disability)</h4>
+                            <div class="search-container"><input type="text" class="finding-search-input" data-category="D" placeholder="Search D-actions..."><div class="search-results"></div></div>
+                            <div id="abnormalFindingsD" class="findings-container"></div>
+                        </div>
+                        <div class="findings-column">
+                            <h4>E (Exposure)</h4>
+                            <div class="search-container"><input type="text" class="finding-search-input" data-category="E" placeholder="Search E-actions..."><div class="search-results"></div></div>
+                            <div id="abnormalFindingsE" class="findings-container"></div>
                         </div>
                     </div>
                 </div>
@@ -177,6 +242,7 @@
                                     <option value="Ward">Admit to Ward</option>
                                     <option value="PCI">Transfer to PCI</option>
                                     <option value="Trombolys">Thrombolysis</option>
+                                    <option value="Surgery">Prepare for Surgery</option>
                                 </select>
                             </div>
                             <div class="form-group">

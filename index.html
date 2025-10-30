@@ -104,6 +104,10 @@
                 <label for="showOnLeaderboardCheckbox">Show my name on the leaderboard</label>
                 <input type="checkbox" id="showOnLeaderboardCheckbox">
             </div>
+            <div class="settings-item" style="margin-top: 15px;">
+                <label for="showAkutrumIntroCheckbox">Show Akutrum intro message</label>
+                <input type="checkbox" id="showAkutrumIntroCheckbox">
+            </div>
         </div>
         <div class="modal-footer">
             <button id="saveSettingsBtn" class="btn-action-final">Save</button>
@@ -126,6 +130,11 @@
             <button id="backToMenuFromHistoryBtn" class="btn-secondary">Back to Menu</button>
         </div>
     </div>
+  </div>
+
+  <!-- NEW: Subtle Notification Popup -->
+  <div id="subtleNotification" class="subtle-notification hidden">
+      <p id="subtleNotificationText"></p>
   </div>
 
   <div id="patchNotesModal" class="modal-backdrop">
@@ -180,6 +189,11 @@
         <button class="accordion-header">Administered Meds</button>
         <div class="accordion-content" id="administeredMedsContent"></div>
       </div>
+
+      <div class="accordion" id="interventionsAccordion" style="display: none;">
+        <button class="accordion-header">Åtgärder</button>
+        <div class="accordion-content" id="interventionsContent"></div>
+      </div>
     </div>
   </div>
 
@@ -225,9 +239,64 @@
     <button id="btnLab">Lab Tests</button>
     <button id="btnRadiology">Radiology</button>
     <button id="btnMeds">Medication</button>
+    <button id="btnConsult">Consult</button> <!-- NEW BUTTON -->
     <button id="btnHomeMeds">Läkemedelslista</button>
     <button id="btnDischarge" class="btn-action-final">Disposition</button> </div>
 
+  </div>
+
+  <!-- NEW: ABCDE Akutrum Menu -->
+  <div id="akutrumMenu" class="right-side-popup">
+    <h2>Akutrum - ABCDE</h2>
+    <div class="menu-body">
+      <!-- NEW: Add Anamnesis button at the top -->
+      <button id="btnAnamnesisAkutrum">Anamnesis</button>
+      <hr class="menu-separator">
+      <div class="abcde-section">
+        <button class="abcde-header" data-letter="A">A - Airway</button>
+        <div class="abcde-content" data-content-for="A">
+          <input type="search" class="abcde-search-input" data-letter="A" placeholder="Search actions..." autocomplete="off">
+          <div class="abcde-search-results"></div>
+        </div>
+      </div>
+      <div class="abcde-section">
+        <button class="abcde-header" data-letter="B">B - Breathing</button>
+        <div class="abcde-content" data-content-for="B">
+          <input type="search" class="abcde-search-input" data-letter="B" placeholder="Search actions..." autocomplete="off">
+          <div class="abcde-search-results"></div>
+        </div>
+      </div>
+      <div class="abcde-section">
+        <button class="abcde-header" data-letter="C">C - Circulation</button>
+        <div class="abcde-content" data-content-for="C">
+          <input type="search" class="abcde-search-input" data-letter="C" placeholder="Search actions..." autocomplete="off">
+          <div class="abcde-search-results"></div>
+        </div>
+      </div>
+      <div class="abcde-section">
+        <button class="abcde-header" data-letter="D">D - Disability</button>
+        <div class="abcde-content" data-content-for="D">
+          <input type="search" class="abcde-search-input" data-letter="D" placeholder="Search actions..." autocomplete="off">
+          <div class="abcde-search-results"></div>
+        </div>
+      </div>
+      <div class="abcde-section">
+        <button class="abcde-header" data-letter="E">E - Exposure</button>
+        <div class="abcde-content" data-content-for="E">
+          <input type="search" class="abcde-search-input" data-letter="E" placeholder="Search actions..." autocomplete="off">
+          <div class="abcde-search-results"></div>
+        </div>
+      </div>
+      <!-- NEW: Add a separator and the medication button -->
+      <hr class="menu-separator">
+      <button id="btnMedsAkutrum">Medication</button>
+      <button id="btnConsultAkutrum">Consult</button>
+      <!-- NEW: Add Continue Management button -->
+      <button id="btnContinueFromAkutrum" class="btn-secondary">Fortsätt i vanligt rum</button>
+      <!-- NEW: Add Disposition button -->
+      <button id="btnDischargeAkutrum" class="btn-action-final">Disposition</button>
+
+    </div>
   </div>
 
   <div id="homeMedicationModal" class="modal-backdrop">
@@ -282,6 +351,12 @@
       </div>
   </div>
 
+  <!-- NEW: Consultation Submenu -->
+  <div id="consultMenu" class="submenu">
+    <h4>Consult Speciality</h4>
+    <div id="consultList"></div>
+  </div>
+
   <div id="chatWindow" class="submenu">
     <h4>Anamnesis</h4>
     <div id="chatMessages"></div>
@@ -321,6 +396,7 @@
         <button id="btnAdmitWard">Admit to Ward</button>
         <button id="btnTransferPCI">Transfer to PCI</button>
         <button id="btnTransferTrombolys">Lägg in för trombolys</button>
+        <button id="btnPrepareSurgery">Prepare for Surgery</button>
 
       </div>
       <button id="btnCancelDisposition" style="background: #555; margin-top: 15px;">Cancel</button>
@@ -465,6 +541,30 @@
     </div>
 </div>
 
+  <!-- NEW: Akutrum Intro Modal -->
+  <div id="akutrumIntroModal" class="modal-backdrop hidden">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Welcome to the Akutrum!</h2>
+        </div>
+        <div class="modal-body">
+            <p>I akutrummet handlägger du patienter enligt <strong>ABCDE. </strong> De olika åtgärderna syns inte av sig själv utan du måste själv söka efter en åtgärd som visas först efter 3 bokstäver som stämmer överrens med åtgärden. Skriver du exempelvis "kol" så dyker förslaget "kolla i munnen" upp.  
+            <p>På akutrummet finns flera nya undersökningar för att bedöma patienten akut medan andra saknas.</p> 
+            </p>I akutrummet kan enbart akuta prover tas och de som inte hade gett resultat omedelbart i verkligheten gör inte det här heller.</p>
+            <p>När den akuta handläggningen är klar kan du skicka vidare patienten eller fortsätta handläggningen i ett vanligt rum. Där visas svar på undersökningar som du beställt men som inte kom direkt på akutrummet. Där beställer du även de "vanliga" röntgenundersökningarna.</p>
+            <p>Lycka till!</p>
+            <div class="checkbox-item" style="margin-top: 20px;">
+                <input type="checkbox" id="dontShowAkutrumIntroAgain">
+                <label for="dontShowAkutrumIntroAgain" style="cursor: pointer;">Don't show this again</label>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button id="confirmAkutrumIntro" class="btn-action-final">Got it!</button>
+        </div>
+    </div>
+  </div>
+
+
   <div id="ekgModal" class="modal-backdrop">
     <div class="modal-content large-modal">
       <button id="closeEkgModal" title="Close EKG">×</button>
@@ -520,6 +620,31 @@
         <div class="modal-body"><textarea id="ratingFeedbackText" class="feedback-textarea" placeholder="Any suggestions or comments..."></textarea></div>
         <div class="modal-footer"><button id="btnSubmitTextFeedback" class="btn-action-final" disabled>Submit</button><button id="btnSkipTextFeedback" class="btn-secondary">Skip</button></div>
     </div>
+  </div>
+
+  <!-- NEW: Ambulance Pre-arrival Report Modal -->
+  <div id="ambulanceReportModal" class="modal-backdrop">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Ambulance Incoming!</h2>
+        </div>
+        <div class="modal-body">
+            <p>An ambulance is en route with the following report:</p>
+            <div id="ambulanceReportContent" class="report-content-box"></div>
+        </div>
+        <div class="modal-footer">
+            <button id="btnAcknowledgeArrival" class="btn-action-final">Understod</button>
+        </div>
+    </div>
+  </div>
+
+  <!-- NEW: Consultation Response Bubble -->
+  <div id="consultationBubble" class="speech-bubble-popup hidden">
+      <div id="consultationBubbleHeader" class="speech-bubble-header">
+          <span id="consultationBubbleTitle"></span>
+          <button id="closeConsultationBubble" class="btn-close-bubble">×</button>
+      </div>
+      <div id="consultationBubbleContent" class="speech-bubble-content"></div>
   </div>
 
   <button id="logoutBtn" class="hidden">Logout</button>

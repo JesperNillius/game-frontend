@@ -9,6 +9,8 @@ export default class PlayerManager {
     async checkInitialAuth() {
         try {
             const status = await api.checkAuthStatus();
+            // --- NEW: Store user settings on the game controller ---
+            this.game.userSettings = status.user?.settings || { showAkutrumIntro: true };
             if (status.user) {
                 this.updateUserUI(status.user);
             }
@@ -147,8 +149,11 @@ export default class PlayerManager {
 
     async showSettingsModal() {
         try {
-            const settings = await api.getUserSettings();
+            // --- FIX: Use the already fetched settings ---
+            const settings = this.game.userSettings || await api.getUserSettings();
             document.getElementById('showOnLeaderboardCheckbox').checked = settings.showOnLeaderboard;
+            // --- FIX: Also update the Akutrum intro checkbox in the settings modal ---
+            document.getElementById('showAkutrumIntroCheckbox').checked = settings.showAkutrumIntro !== false;
             document.getElementById('menu').classList.add('hidden');
             document.getElementById('settingsModal').classList.add('visible');
         } catch (error) {
@@ -157,9 +162,14 @@ export default class PlayerManager {
     }
 
     async saveSettings() {
-        const showOnLeaderboard = document.getElementById('showOnLeaderboardCheckbox').checked;
+        const settingsToSave = {
+            showOnLeaderboard: document.getElementById('showOnLeaderboardCheckbox').checked,
+            showAkutrumIntro: document.getElementById('showAkutrumIntroCheckbox').checked // --- FIX: Read from the correct checkbox ---
+        };
         try {
-            await api.saveUserSettings({ showOnLeaderboard });
+            const savedSettings = await api.saveUserSettings(settingsToSave);
+            // Update the local settings object
+            this.game.userSettings = savedSettings.settings;
             document.getElementById('settingsModal').classList.remove('visible');
             this.showMenuView('main');
         } catch (error) {

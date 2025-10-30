@@ -99,13 +99,30 @@ export async function getPatientStatus(patientId) {
   return response.json();
 }
 
+export async function assignPatientToRoom(patientId, roomName) {
+  console.log(`[API.JS-DEBUG] Sending assignPatientToRoom request for patient ${patientId} to room ${roomName}`);
+  const response = await fetch(`${API_URL}/api/patient/${patientId}/assign-room`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ roomName })
+  });
+  if (!response.ok) throw new Error('assignPatientToRoom request failed');
+  return response.json();
+}
+
 export async function postChatMessage(patientId, message) {
   const response = await fetch(`${API_URL}/api/chat`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ patientId, message })
   });
-  return response.json();
+  // --- FIX: Handle 202 status for initial "thinking" response ---
+  // The backend sends a 202 immediately to indicate who is thinking.
+  // The final reply comes via polling.
+  if (response.status === 202) {
+    return response.json(); // This will contain thinkingCharacterId
+  }
+  return response.json(); // This would be for direct replies like SOMAÄTAS
 }
 
 export async function performExam(patientId, examId) {
@@ -166,6 +183,16 @@ export async function toggleHomeMed(patientId, medId) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ medId })
+    });
+    return response.json();
+}
+
+// --- NEW: Consultation Endpoint ---
+export async function consultSpecialist(patientId, specialityId, actionsTaken) {
+    const response = await fetch(`${API_URL}/api/patient/${patientId}/consult`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ specialityId, actionsTaken }) // --- FIX: Send the actionsTaken array ---
     });
     return response.json();
 }

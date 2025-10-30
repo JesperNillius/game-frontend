@@ -29,6 +29,7 @@ export default class ActionManager {
         if (!userMessage || this.game.currentPatientId === null || this.game.currentPatientId === undefined) return;
 
         const currentPatient = this.game.patients.find(p => p.id === this.game.currentPatientId);
+        if (!currentPatient) return;
 
         this.ui.addChatMessage("You", userMessage);
         input.value = "";
@@ -36,25 +37,32 @@ export default class ActionManager {
         try {
             const data = await api.postChatMessage(this.game.currentPatientId, userMessage);
 
-            // NEW: Handle multi-bubble SOMAÄTAS response
-            if (data.isSomaetas && Array.isArray(data.reply)) {
-                const speaker = data.speaker || "Patient";
-                for (let i = 0; i < data.reply.length; i++) {
-                    // Use a delay to make it look like the patient is thinking
-                    setTimeout(() => {
-                        this.ui.addChatMessage(speaker, data.reply[i]);
-                    }, i * 400); // 400ms delay between each bubble
+            // --- FIX: Handle the initial 202 response to set thinking state ---
+            if (data.thinkingCharacterId) {
+                // This is the initial response. Find the character and set their thinking state.
+                const thinkingCharacter = this.game.patients.find(p => p.id === data.thinkingCharacterId) ||
+                                          this.game.parents.find(p => p.id === data.thinkingCharacterId);
+                if (thinkingCharacter) {
+                    thinkingCharacter.isThinking = true;
                 }
-            } else {
-                // Original logic for single messages
-                this.ui.addChatMessage(data.speaker || "Patient", data.reply);
-            }
-
-            if (currentPatient) {
+                // The final reply will come in the next status poll.
+            } else if (data.reply) { // This branch handles SOMAÄTAS which is a direct reply
+                // This is a direct, single response (like for SOMAÄTAS)
+                if (data.isSomaetas && Array.isArray(data.reply)) {
+                    const speaker = data.speaker || "Patient";
+                    data.reply.forEach(line => this.ui.addChatMessage(speaker, line));
+                } else {
+                    this.ui.addChatMessage(data.speaker || "Patient", data.reply);
+                }
+                // Chat history is updated in pollForVitals now for standard chat.
+                // For SOMAÄTAS, it's a direct reply, so update history here. This is a direct reply.
                 currentPatient.chatHistory = document.getElementById("chatMessages").innerHTML;
             }
+
         } catch (err) {
-            console.error("Failed to send chat message:", err);
+            // Clear thinking state on all characters on error
+            this.game.patients.forEach(p => p.isThinking = false);
+            this.game.parents.forEach(p => p.isThinking = false);
             this.ui.addChatMessage("System", "Error: Could not contact patient.");
         }
     }
@@ -120,8 +128,10 @@ export default class ActionManager {
             const updatedLabsFromServer = await api.orderLab(currentPatient.id, testId);
             currentPatient.orderedLabs = updatedLabsFromServer;
 
+            // --- FIX: Add the action ID and the tracking log for consistency ---
             if (!currentPatient.actionsTaken.includes(testId)) {
                 currentPatient.actionsTaken.push(testId);
+                console.log(`%c[ACTION-TRACKING] Added '${testId}' to actionsTaken.`, 'color: #87CEEB; font-weight: bold;');
             }
             this.ui.updateAndOpenAccordion(currentPatient, 'lab');
         } catch (err) {
@@ -170,6 +180,7 @@ export default class ActionManager {
 
     // MEDICATION
     showMedsMenu() {
+        console.log("[DEBUG] 2. actionManager.showMedsMenu() called. Rendering buttons and showing submenu.");
         this.ui.renderMedicationButtons(this.game.allMedications, 'medsList');
         this.ui.showSubmenu('medsMenu');
     }
@@ -182,7 +193,7 @@ export default class ActionManager {
 
         switch (actionType) {
             case 'physicalExam':
-                testInfo = { name: id };
+                testInfo = { id: id, name: id }; // FIX: Ensure testInfo has an 'id' property
                 apiCall = () => api.performExam(currentPatient.id, id);
                 stateProperty = 'performedExams';
                 resultKey = 'examName';
@@ -205,7 +216,11 @@ export default class ActionManager {
             default: return;
         }
 
-        if (!testInfo) return;
+        // --- FIX: If testInfo is not found in the original lists, create a temporary one. ---
+        // This handles new custom actions from ABCDE.xlsx that are not in the old data files.
+        if (!testInfo) {
+            testInfo = { id: id, name: id, resultLabel: id };
+        }
 
         button.disabled = true;
         button.textContent = '...';
@@ -226,8 +241,11 @@ export default class ActionManager {
                 currentPatient[stateProperty][resultData[resultKey] || testInfo.name] = resultData.result || resultData.finding;
                 this.ui.updateAndOpenAccordion(currentPatient, actionType === 'physicalExam' ? 'exam' : (actionType === 'bedsideTest' ? 'bedside' : actionType), { standardFindings: this.game.standardFindings, allRadiologyTests: this.game.allRadiologyTests, allBedsideTests: this.game.allBedsideTests });
             }
-            if (!currentPatient.actionsTaken.includes(id)) {
-                currentPatient.actionsTaken.push(id);
+            // --- FIX: Always use the canonical ID from testInfo to ensure consistency ---
+            const actionId = testInfo.id;
+            if (!currentPatient.actionsTaken.includes(actionId)) {
+                currentPatient.actionsTaken.push(actionId);
+                console.log(`%c[ACTION-TRACKING] Added '${actionId}' to actionsTaken.`, 'color: #87CEEB; font-weight: bold;');
             }
         } catch (err) {
             console.error(`Failed to perform ${actionType}:`, err);
@@ -239,6 +257,7 @@ export default class ActionManager {
 
     async confirmDose(dose) {
         if (!this.game.medicationContext) return;
+
         const { action, medInfo, element } = this.game.medicationContext;
 
         if (action === 'er_administer') {
@@ -295,7 +314,14 @@ export default class ActionManager {
             if (!currentPatient.actionsTaken.includes(medInfo.id)) {
                 currentPatient.actionsTaken.push(medInfo.id);
             }
-            this.game.characterManager.triggerNurseAction(currentPatient);
+
+            // --- FIX: Use the correct nurse action based on the room ---
+            const isInAkutrum = currentPatient.assignedRoom && currentPatient.assignedRoom.name === 'Room 4';
+            if (isInAkutrum) {
+                this.game.characterManager.triggerNurseAkutrumAction(); // Perform the simple turn animation
+            } else {
+                this.game.characterManager.triggerNurseAction(currentPatient); // Perform the full walk-to-patient sequence
+            }
             this.ui.updateAndOpenAccordion(currentPatient, 'meds');
             this.game.pollForVitals(this.game.currentPatientId);
         } catch (error) {

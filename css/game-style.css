@@ -266,6 +266,104 @@
   background: #555;
 }
 
+.submenu .menu-body {
+    overflow-y: auto; /* Make the content area scrollable */
+    padding: 15px;
+}
+
+/* --- NEW: ABCDE Akutrum Menu Styles --- */
+/* Make the menu a full-height panel, just like #roomMenu */
+#akutrumMenu {
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: 220px;
+    height: 100%;
+    background: #333;
+    color: white;
+    padding: 15px;
+    display: none; /* hidden until zoom in */
+    z-index: 2;
+    box-sizing: border-box;
+}
+
+#akutrumMenu h2 {
+    margin-top: 0;
+}
+
+.abcde-header {
+    /* Match the style of #roomMenu buttons */
+    display: block;
+    width: 100%;
+    margin: 8px 0;
+    padding: 10px;
+    font-size: 16px;
+    background: #444;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+}
+.abcde-header:hover {
+    background: #666;
+}
+
+/* --- NEW: Styles for Akutrum Menu additions --- */
+.menu-separator {
+    border: none;
+    border-top: 1px solid #555;
+    margin: 15px 0;
+}
+
+#akutrumMenu #btnMedsAkutrum,
+#akutrumMenu #btnAnamnesisAkutrum,
+#akutrumMenu #btnContinueFromAkutrum {
+    /* Make these buttons full-width, just like the others */
+    display: block;
+    width: 100%;
+    margin: 8px 0;
+    padding: 10px;
+    font-size: 16px;
+    background: #444;
+    border: none; /* Ensure no border from other styles */
+    border-radius: 6px;
+    color: white; /* Ensure text is white */
+}
+
+#akutrumMenu #btnMedsAkutrum:hover,
+#akutrumMenu #btnAnamnesisAkutrum:hover,
+#akutrumMenu #btnContinueFromAkutrum:hover {
+    background: #666;
+}
+
+/* --- NEW: Make the Akutrum Disposition button full-width --- */
+#akutrumMenu #btnDischargeAkutrum {
+    display: block;
+    width: 100%;
+    margin-top: 8px; /* Add some space above it */
+}
+
+.abcde-content {
+  padding: 10px;
+  background-color: #2a2a2e;
+  border: 1px solid #444;
+  border-top: none;
+  border-radius: 0 0 6px 6px;
+  display: none; /* Hidden by default */
+}
+
+.abcde-search-input {
+  /* Reuse existing search input style */
+  width: 100%;
+  padding: 8px;
+  margin-bottom: 10px;
+  border-radius: 6px;
+  border: 1px solid #555;
+  background: #1e1e1e;
+  color: #fff;
+  box-sizing: border-box;
+}
+
 /* Accordion Styling */
 #vitalsBody .accordion:first-child {
   margin-top: 0;
@@ -348,12 +446,13 @@
 }
 .chief-complaint {
   font-style: italic;
-  color: #ccc;
+  color: #eee; /* Brighter color */
   margin: 5px 0 10px 0;
   text-align: center;
-  font-size: 14px;
+  font-size: 15px; /* Slightly larger */
   border-bottom: 1px solid #444;
   padding-bottom: 10px;
+  font-weight: 600; /* Bolder */
 }
 
 /* --- CHAT WINDOW STYLING --- */
@@ -422,6 +521,28 @@
   color: #fff;
   align-self: flex-start;
   border-bottom-left-radius: 4px;
+}
+/* --- NEW: Thinking Bubble Animation --- */
+.thinking-bubble .dot {
+    animation: thinking-dot 1.4s infinite;
+    opacity: 0;
+}
+.thinking-bubble .dot:nth-child(1) {
+    animation-delay: 0s;
+}
+.thinking-bubble .dot:nth-child(2) {
+    animation-delay: 0.2s;
+}
+.thinking-bubble .dot:nth-child(3) {
+    animation-delay: 0.4s;
+}
+@keyframes thinking-dot {
+    0%, 80%, 100% {
+        opacity: 0;
+    }
+    40% {
+        opacity: 1;
+    }
 }
 
 .btn-action-final {
@@ -548,10 +669,80 @@
 #chatWindow,
 #medsMenu,
 #bedsideMenu,
+#consultMenu,
 #radiologyMenu {
   right: 220px;
   left: auto; /* Ensure left positioning is disabled */
 }
+
+/* --- NEW: Consultation Builder Styles --- */
+.consultation-builder-container {
+    display: flex;
+    gap: 20px;
+    background-color: var(--admin-bg-input);
+    padding: 15px;
+    border-radius: var(--admin-border-radius);
+    border: 1px solid var(--admin-border-color);
+}
+
+.consultation-sidebar {
+    width: 200px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.consultant-list {
+    margin-top: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.consultant-list-item {
+    padding: 8px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    background-color: var(--admin-bg-tertiary);
+    transition: background-color 0.2s;
+}
+
+.consultant-list-item.active, .consultant-list-item:hover {
+    background-color: var(--admin-accent-primary);
+    color: #fff;
+}
+
+.consultation-builder {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.consultation-rule {
+    background-color: var(--admin-bg-secondary);
+    padding: 15px;
+    border-radius: var(--admin-border-radius);
+    border: 1px solid var(--admin-border-color);
+}
+
+.consultation-rule h5 {
+    margin: 0 0 10px 0;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--admin-border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.consultation-rule .btn-remove {
+    padding: 2px 8px;
+    font-size: 1em;
+    line-height: 1;
+    background-color: var(--admin-accent-danger);
+}
+
 #generalSearchResultList {
   flex-grow: 1; /* Allows the list to grow and fill available space */
   overflow-y: auto; /* Adds a vertical scrollbar only when needed */
@@ -1045,22 +1236,11 @@
   color: #fff;
 }
 #userInfo {
-  position: fixed;
-  top: 15px;
-  right: 15px;
-  padding: 8px 12px;
-  background-color: rgba(42, 42, 46, 0.8); /* Semi-transparent dark background */
-  color: white;
-  border-radius: 6px;
-  border: 1px solid #555;
-  z-index: 10; /* Ensures it stays on top of the canvas */
-  font-size: 14px;
+ display: flex;
+  align-items: center;
+  gap: 10px;
 }
 #user-session-controls {
-    position: absolute;
-    top: 15px;
-    right: 20px;
-    z-index: 1001; /* Ensure it's above the canvas */
     display: flex;
     align-items: center;
     gap: 10px;
@@ -1435,6 +1615,73 @@
     background-color: #4a4a4a;
 }
 
+/* --- NEW: Consultation Speech Bubble --- */
+.speech-bubble-popup {
+    position: absolute;
+    top: 33%; /* Position it higher up on the screen */
+    right: 430px; /* Position it to the left of the consult menu (220px + 210px width) */
+    width: 250px;
+    background-color: #3a3a3a;
+    border: 1px solid #555;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+    z-index: 15;
+    opacity: 0;
+    transform: translateY(-50%) scale(0.95); /* Move it up by half its height to truly center it */
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    pointer-events: none; /* Hidden by default */
+}
+
+.speech-bubble-popup.visible {
+    opacity: 1;
+    transform: translateY(-50%) scale(1);
+    pointer-events: auto;
+}
+
+/* This creates the little triangle pointing to the right */
+.speech-bubble-popup::after {
+    content: '';
+    position: absolute;
+    top: 20px;
+    left: 100%; /* Position it on the right edge of the bubble */
+    margin-left: -1px; /* Overlap slightly to avoid gaps */
+    border-width: 10px;
+    border-style: solid;
+    border-color: transparent transparent transparent #3a3a3a; /* Pointing left */
+}
+
+.speech-bubble-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 15px;
+    font-weight: bold;
+    color: #fff;
+    border-bottom: 1px solid #555;
+}
+
+.speech-bubble-content {
+    padding: 15px;
+    font-size: 0.9em;
+    color: #e0e0e0;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.btn-close-bubble {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    line-height: 1;
+    color: #aaa;
+    cursor: pointer;
+    padding: 0;
+    transition: color 0.2s ease;
+}
+.btn-close-bubble:hover {
+    color: #fff;
+}
+
 .btn-toggle.active {
     background-color: #2274A5; /* Active/selected style */
     color: #fff;
@@ -1509,6 +1756,12 @@
     align-items: flex-start; /* Align to the left */
 }
 
+/* --- NEW: Style for checkbox items in modals --- */
+.checkbox-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
 /* We can also make the buttons in this group not stretch to full width */
 .button-toggle-group .btn-toggle {
     flex-grow: 0;
@@ -1802,6 +2055,7 @@
 .abg-grid span:nth-child(even) {
     text-align: right;
     font-weight: bold;
+    white-space: nowrap; /* --- FIX: Prevents the value and unit from wrapping to a new line --- */
 }
 
 .abg-grid span.abnormal {
@@ -1985,8 +2239,8 @@
     display: grid; /* Use grid to center the text */
     place-items: center;
     background: conic-gradient(
-        #4caf50 0%, /* Start with green */
-        #4caf50 var(--score-percent, 0%), /* Green part of the ring */
+        var(--good-score-color, #4caf50) 0%, /* Use the dynamic color */
+        var(--good-score-color, #4caf50) var(--score-percent, 0%), /* Green part of the ring */
         var(--bad-score-color, #444) var(--score-percent, 0%), /* The "unfilled" part uses the new color */
         var(--bad-score-color, #444) 100%
     );
@@ -2212,14 +2466,6 @@
     background-color: #21252b; /* A darker sidebar background */
     border-right: 1px solid #444;
     padding: 20px;
-    overflow-y: auto;
-}
-
-.admin-sidebar h2 {
-    margin-top: 0;
-    border-bottom: 1px solid #444;
-    padding-bottom: 15px;
-    color: #a9c5e8; /* A light blue accent for the main title */
 }
 
 .btn-new-case {
@@ -2737,4 +2983,44 @@ body.ipad #app-container,
 body.ipad #gameCanvas {
     width: 100vw;
     height: 100vh;
+}
+
+/* --- NEW: Ambulance Report Modal Style --- */
+.report-content-box {
+    background-color: #1c1c1e;
+    border: 1px solid #444;
+    border-radius: 6px;
+    padding: 15px;
+    margin-top: 10px;
+    white-space: pre-wrap; /* This preserves line breaks from the textarea */
+    max-height: 40vh;
+    overflow-y: auto;
+}
+
+/* --- NEW: Subtle Notification Styles --- */
+.subtle-notification {
+    position: absolute;
+    top: 15px;
+    left: 250px; /* Position it next to the vitals popup */
+    background-color: #8B3A3A; /* Use the same red as the Akutrum */
+    color: #fff;
+    padding: 10px 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+    z-index: 1500;
+    cursor: pointer;
+    border: 2px solid #c06161;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    transform: translateY(-20px);
+    opacity: 0;
+}
+
+.subtle-notification.visible {
+    transform: translateY(0);
+    opacity: 1;
+}
+
+.subtle-notification p {
+    margin: 0;
+    font-weight: bold;
 }

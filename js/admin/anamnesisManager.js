@@ -2,7 +2,7 @@ import { renderAnamnesisChecklist, renderAnamnesisKeywords, addKeywordToModal } 
 
 export function initAnamnesisManager() {
 
-    const anamnesisModal = document.getElementById('anamnesisModal');
+    const anamnesisModal = document.getElementById('anamnesisQuestionModal');
     const closeBtn = document.getElementById('closeAnamnesisModal');
     const checklistContainer = document.getElementById('anamnesisChecklistContainer');
     const keywordInput = document.getElementById('anamnesisKeywordInput');

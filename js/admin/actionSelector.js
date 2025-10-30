@@ -4,9 +4,28 @@ const actionSelectorModal = document.getElementById('actionSelectorModal');
 const actionListContainer = document.getElementById('actionListContainer');
 const btnToggleGroupMode = document.getElementById('btnToggleGroupMode');
 
+const actionSearchInput = document.getElementById('actionSearchInput'); // Get reference here
+const confirmActionSelectionBtn = document.getElementById('confirmActionSelection'); // Get reference here
+
 let allActions = [];
 let currentActionTarget = null;
+let currentSelectionCallback = null; // Stores the callback function for consultation actions
+let currentMode = 'legacy'; // 'legacy' or 'consultation'
+let _currentOtherCategoryIds = {}; // Stores otherCategoryIds for the currently open modal
 let isGroupingOr = false;
+
+// Helper to get currently selected IDs from the modal UI
+function getCurrentlySelectedIdsFromModal() {
+    const selectedIds = [];
+    document.querySelectorAll('#actionListContainer input[type="checkbox"]:checked').forEach(cb => {
+        if (cb.dataset.group) { // Handle OR groups
+            selectedIds.push(JSON.parse(cb.dataset.group));
+        } else { // Handle single actions
+            selectedIds.push(cb.dataset.id);
+        }
+    });
+    return selectedIds;
+}
 
 function renderActionCheckboxes(actions, currentRawSelection, otherCategoryIds) {
     actionListContainer.innerHTML = '';
@@ -18,7 +37,7 @@ function renderActionCheckboxes(actions, currentRawSelection, otherCategoryIds) 
         return acc;
     }, {});
 
-    const categoryOrder = ['Physical Exam', 'Bedside Test', 'Lab Test', 'Radiology', 'Medication'];
+    const categoryOrder = ['Physical Exam', 'Bedside Test', 'Lab Test', 'Radiology', 'Medication', 'Consultation'];
     const sortedCategories = Object.keys(categorizedActions).sort((a, b) => {
         const indexA = categoryOrder.indexOf(a);
         const indexB = categoryOrder.indexOf(b);
@@ -36,8 +55,8 @@ function renderActionCheckboxes(actions, currentRawSelection, otherCategoryIds) 
         checkboxGrid.className = 'action-checkbox-grid';
 
         categorizedActions[category].forEach(action => {
-            const parentGroup = currentRawSelection.find(item => Array.isArray(item) && item.includes(action.id));
-            if (parentGroup) return;
+            const isPartOfOrGroup = currentRawSelection.some(item => Array.isArray(item) && item.includes(action.id));
+            if (isPartOfOrGroup) return; // Skip if already part of an OR group
 
             const checkboxId = `action-checkbox-${action.id}`;
             const label = document.createElement('label');
@@ -72,7 +91,7 @@ function renderActionCheckboxes(actions, currentRawSelection, otherCategoryIds) 
     });
 
     currentRawSelection.forEach(item => {
-        if (Array.isArray(item)) {
+        if (Array.isArray(item)) { // Render existing OR groups at the top
             const groupId = `or-group-${item.join('-')}`;
             const label = document.createElement('label');
             label.className = 'checkbox-label is-or-group';
@@ -87,27 +106,32 @@ function renderActionCheckboxes(actions, currentRawSelection, otherCategoryIds) 
     });
 }
 
-export function openActionSelector(target) {
-    console.log("[DEBUG] openActionSelector() function has been called.");
+export function openLegacyActionSelector(target) {
+    console.log("[DEBUG] openLegacyActionSelector() called for target:", target);
+    actionSearchInput.value = ''; // Clear search input
+    currentMode = 'legacy'; // Set the mode
     currentActionTarget = target;
     const title = document.querySelector(`.btn-select-actions[data-target="${target}"]`).textContent;
     document.getElementById('actionSelectorTitle').textContent = title;
 
-    isGroupingOr = false;
+    // --- FIX: Ensure the group mode button is visible for legacy action selectors ---
+    isGroupingOr = false; // Reset grouping state
     btnToggleGroupMode.classList.remove('active');
     btnToggleGroupMode.textContent = 'Start Creating a Group';
+    btnToggleGroupMode.style.display = 'inline-block'; // Make sure it's visible
 
     const criticalJson = document.getElementById('ActionsCritical').value;
     const recommendedJson = document.getElementById('ActionsRecommended').value;
     const contraindicatedJson = document.getElementById('ActionsContraindicated').value;
-
+    
     const criticalIds = new Set(JSON.parse(criticalJson || '[]').flat());
     const recommendedIds = new Set(JSON.parse(recommendedJson || '[]').flat());
     const contraindicatedIds = new Set(JSON.parse(contraindicatedJson || '[]').flat());
-
+    currentSelectionCallback = null; // Ensure callback is null for legacy mode
+    
     let currentRaw = [];
     const otherCategoryIds = {};
-
+    
     if (currentActionTarget === 'ActionsCritical') {
         currentRaw = JSON.parse(criticalJson || '[]');
         otherCategoryIds.Recommended = recommendedIds;
@@ -116,38 +140,66 @@ export function openActionSelector(target) {
         currentRaw = JSON.parse(recommendedJson || '[]');
         otherCategoryIds.Critical = criticalIds;
         otherCategoryIds.Contraindicated = contraindicatedIds;
-    } else {
+    } else if (currentActionTarget === 'ActionsContraindicated') {
         currentRaw = JSON.parse(contraindicatedJson || '[]');
         otherCategoryIds.Critical = criticalIds;
         otherCategoryIds.Recommended = recommendedIds;
     }
+    _currentOtherCategoryIds = otherCategoryIds; // Store globally for search/group mode
 
     renderActionCheckboxes(allActions, currentRaw, otherCategoryIds);
     actionSelectorModal.classList.add('visible');
 }
 
+export function openConsultationActionSelector(callback) {
+    console.log("[DEBUG] openConsultationActionSelector() called.");
+    actionSearchInput.value = ''; // Clear search input
+    currentMode = 'consultation'; // Set the mode
+    document.getElementById('actionSelectorTitle').textContent = "Select Actions";
+    currentActionTarget = null; // Ensure target is null for consultation mode
+    currentSelectionCallback = callback; // Set the callback for consultation actions
+    _currentOtherCategoryIds = {}; // No other categories for consultation
+    renderActionCheckboxes(allActions, [], {}); // Render with no pre-selection or disabled items
+    actionSelectorModal.classList.add('visible');
+
+    // Hide group mode for consultation selector
+    isGroupingOr = false; // Reset
+    btnToggleGroupMode.classList.remove('active');
+    btnToggleGroupMode.textContent = 'Start Creating a Group';
+    btnToggleGroupMode.style.display = 'none'; // Hide for consultation
+}
+
 export function initActionSelector(actions) {
     allActions = actions;
 
-    document.getElementById('actionSearchInput').addEventListener('input', (e) => {
+    actionSearchInput.addEventListener('input', (e) => {
         const searchTerm = e.target.value.toLowerCase();
         const filteredActions = allActions.filter(a => a.name.toLowerCase().includes(searchTerm) || a.category.toLowerCase().includes(searchTerm));
-        const currentRaw = JSON.parse(document.getElementById(currentActionTarget).value || '[]');
-        renderActionCheckboxes(filteredActions, currentRaw, {});
+        
+        // --- FIX: Use the correct source of truth for the current selection ---
+        let currentRawSelection = [];
+        if (currentMode === 'legacy') {
+            // Legacy mode (Critical/Recommended): The hidden input is the source of truth.
+            currentRawSelection = JSON.parse(document.getElementById(currentActionTarget).value || '[]');
+        } else {
+            // Consultation mode: The checkboxes currently in the modal are the source of truth.
+            currentRawSelection = getCurrentlySelectedIdsFromModal();
+        }
+        renderActionCheckboxes(filteredActions, currentRawSelection, _currentOtherCategoryIds);
     });
 
-    document.getElementById('confirmActionSelection').addEventListener('click', () => {
-        const finalSelection = [];
-        document.querySelectorAll('#actionListContainer input:checked').forEach(cb => {
-            if (cb.dataset.group) {
-                finalSelection.push(JSON.parse(cb.dataset.group));
-            } else {
-                finalSelection.push(cb.dataset.id);
-            }
-        });
-        const jsonString = JSON.stringify(finalSelection);
-        document.getElementById(currentActionTarget).value = jsonString;
-        renderSelectedActionTags(currentActionTarget, jsonString, allActions);
+    confirmActionSelectionBtn.addEventListener('click', () => {
+        const finalSelection = getCurrentlySelectedIdsFromModal();
+
+        if (currentSelectionCallback) {
+            // Consultation mode: use the callback
+            currentSelectionCallback(finalSelection);
+        } else if (currentActionTarget) {
+            // Legacy mode: update the hidden input and render tags
+            const jsonString = JSON.stringify(finalSelection);
+            document.getElementById(currentActionTarget).value = jsonString;
+            renderSelectedActionTags(currentActionTarget, jsonString, allActions);
+        }
         actionSelectorModal.classList.remove('visible');
     });
 
@@ -156,13 +208,19 @@ export function initActionSelector(actions) {
     });
 
     btnToggleGroupMode.addEventListener('click', () => {
+        if (currentSelectionCallback) { // Group mode is not supported for consultation selector
+            alert('Group mode is not available for this selection.');
+            return;
+        }
+
         isGroupingOr = !isGroupingOr;
         btnToggleGroupMode.classList.toggle('active', isGroupingOr);
 
         if (isGroupingOr) {
             btnToggleGroupMode.textContent = 'Finish Group';
-            const currentRaw = JSON.parse(document.getElementById(currentActionTarget).value || '[]');
-            renderActionCheckboxes(allActions, currentRaw, {});
+            // Get current selection from modal, not from hidden input
+            const currentSelectedInModal = getCurrentlySelectedIdsFromModal();
+            renderActionCheckboxes(allActions, currentSelectedInModal, _currentOtherCategoryIds);
         } else {
             btnToggleGroupMode.textContent = 'Start Creating a Group';
             const newGroupIds = Array.from(document.querySelectorAll('#actionListContainer input:checked'))
@@ -171,19 +229,20 @@ export function initActionSelector(actions) {
 
             if (newGroupIds.length < 2) {
                 alert('You must select at least two new actions to create a group.');
-                renderActionCheckboxes(allActions, JSON.parse(document.getElementById(currentActionTarget).value || '[]'), {});
+                // Re-render with current selection if group creation failed
+                renderActionCheckboxes(allActions, getCurrentlySelectedIdsFromModal(), _currentOtherCategoryIds);
                 return;
             }
 
             let currentRaw = JSON.parse(document.getElementById(currentActionTarget).value || '[]');
             currentRaw.push(newGroupIds);
-            renderActionCheckboxes(allActions, currentRaw, {});
+            renderActionCheckboxes(allActions, currentRaw, _currentOtherCategoryIds);
         }
     });
 
-    actionListContainer.addEventListener('change', (e) => {
+     actionListContainer.addEventListener('change', (e) => {
         if (e.target.type === 'checkbox') {
-            document.getElementById('actionSearchInput').focus();
+            actionSearchInput.focus();
         }
     });
 }
