@@ -99,7 +99,7 @@ export default class GameMainController {
         ]},
         { x: 820, y: 50, w: 220, h: 210, name: "Room 3", furniture: [
             { x: 148, y: 30, w: 70, h: 85, image: 'patientBed' },
-            { x: 0, y: 0, w: 90, h: 85, image: 'armchair4' },
+            { x: 0, y: 3, w: 90, h: 85, image: 'armchair4' },
             { x: 1, y: 120, w: 25, h: 60, image: 'sink' },
             { x: 60, y: 187, w: 8, h: 30, image: 'handsprit' }
         ]},
