@@ -363,12 +363,12 @@ export default class CharacterManager {
             const isChild = patientData.age < 18;
 
             const newPatient = { x, y, radius: isChild ? 12 : 14, color: "red", actionsTaken: [], assignedRoom: null, rotation: 0, ...restOfPatientData, currentVitals: { AF: patientData.AF, Saturation: patientData.Saturation, Puls: patientData.Puls, BT_systolic: patientData.BT_systolic, BT_diastolic: patientData.BT_diastolic, Temp: patientData.Temp, RLS: patientData.RLS }, vitalColors: { AF: utils.getVitalColor('AF', patientData.AF, patientData.age), Saturation: utils.getVitalColor('Saturation', patientData.Saturation, patientData.age), Puls: utils.getVitalColor('Puls', patientData.Puls, patientData.age), BT: utils.getVitalColor('BT_systolic', patientData.BT_systolic, patientData.age), Temp: utils.getVitalColor('Temp', patientData.Temp, patientData.age), RLS: utils.getVitalColor('RLS', patientData.RLS, patientData.age) } };
-            if (newPatient.patient_avatar) newPatient.img = await utils.loadImage(`${API_URL}/images/${newPatient.patient_avatar}`);
+            if (newPatient.patient_avatar) newPatient.img = await utils.loadImage(`/images/${newPatient.patient_avatar}`);
             this.game.patients.push(newPatient);
 
             if (patientData.age < 18 && patientData.parent_avatar) {
                 // --- FIX: Use parentId from patientData (now sent from backend) ---
-                const parentImg = await utils.loadImage(`${API_URL}/images/${patientData.parent_avatar}`);
+                const parentImg = await utils.loadImage(`/images/${patientData.parent_avatar}`);
                 this.game.parents.push({ id: patientData.parentId, x: newPatient.x - 20, y: newPatient.y, img: parentImg, childId: newPatient.id, rotation: 0, name: patientData.ParentName });
             }
         } catch (err) {
@@ -402,7 +402,7 @@ export default class CharacterManager {
         const isChild = patientData.age < 18;
 
         const newPatient = { x, y, radius: isChild ? 12 : 14, color: "red", actionsTaken: [], assignedRoom: akutrum, rotation: 0, ...restOfPatientData, currentVitals: { AF: patientData.AF, Saturation: patientData.Saturation, Puls: patientData.Puls, BT_systolic: patientData.BT_systolic, BT_diastolic: patientData.BT_diastolic, Temp: patientData.Temp, RLS: patientData.RLS }, vitalColors: { AF: utils.getVitalColor('AF', patientData.AF, patientData.age), Saturation: utils.getVitalColor('Saturation', patientData.Saturation, patientData.age), Puls: utils.getVitalColor('Puls', patientData.Puls, patientData.age), BT: utils.getVitalColor('BT_systolic', patientData.BT_systolic, patientData.age), Temp: utils.getVitalColor('Temp', patientData.Temp, patientData.age), RLS: utils.getVitalColor('RLS', patientData.RLS, patientData.age) } };
-        if (newPatient.patient_avatar) newPatient.img = await utils.loadImage(`${API_URL}/images/${newPatient.patient_avatar}`);
+        if (newPatient.patient_avatar) newPatient.img = await utils.loadImage(`/images/${newPatient.patient_avatar}`);
         this.game.patients.push(newPatient);
 
         // --- REMOVED: Do not automatically enter the room view ---
@@ -434,12 +434,12 @@ export default class CharacterManager {
             currentVitals: { AF: patientData.AF, Saturation: patientData.Saturation, Puls: patientData.Puls, BT_systolic: patientData.BT_systolic, BT_diastolic: patientData.BT_diastolic, Temp: patientData.Temp, RLS: patientData.RLS }, 
             vitalColors: { AF: utils.getVitalColor('AF', patientData.AF, patientData.age), Saturation: utils.getVitalColor('Saturation', patientData.Saturation, patientData.age), Puls: utils.getVitalColor('Puls', patientData.Puls, patientData.age), BT: utils.getVitalColor('BT_systolic', patientData.BT_systolic, patientData.age), Temp: utils.getVitalColor('Temp', patientData.Temp, patientData.age), RLS: utils.getVitalColor('RLS', patientData.RLS, patientData.age) } 
         };
-        if (newPatient.patient_avatar) newPatient.img = await utils.loadImage(`${API_URL}/images/${newPatient.patient_avatar}`);
+        if (newPatient.patient_avatar) newPatient.img = await utils.loadImage(`/images/${newPatient.patient_avatar}`);
         this.game.patients.push(newPatient);
 
         if (patientData.age < 18 && patientData.parent_avatar) {
             // --- FIX: Use parentId from patientData (now sent from backend) ---
-            const parentImg = await utils.loadImage(`${API_URL}/images/${patientData.parent_avatar}`);
+            const parentImg = await utils.loadImage(`/images/${patientData.parent_avatar}`);
             this.game.parents.push({ id: patientData.parentId, x: newPatient.x - 20, y: newPatient.y, img: parentImg, childId: newPatient.id, rotation: 0, name: patientData.ParentName });
         }
     }

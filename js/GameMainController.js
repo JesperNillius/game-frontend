@@ -347,26 +347,26 @@ export default class GameMainController {
     async loadInitialAssets() {
         try {
             const [kruka2, kruka, chair_to_right, chair_to_left, patientBed, skrivbord, tree1, treesnroads, nurseImg, akutrumImg, interior1Img, interior2Img, interior3Img, armchair4, armchair5, armchair6, sink, handsprit, trashcan] = await Promise.all([
-                // ✅ Use the imported API_URL
-                utils.loadImage(`${API_URL}/images/kruka2.png`),
-                utils.loadImage(`${API_URL}/images/kruka.png`),
-                utils.loadImage(`${API_URL}/images/chair_to_left.png`),
-                utils.loadImage(`${API_URL}/images/chair_to_right.png`),
-                utils.loadImage(`${API_URL}/images/patient_bed.png`),
-                utils.loadImage(`${API_URL}/images/skrivbord.png`),
-                utils.loadImage(`${API_URL}/images/tree1.png`),
-                utils.loadImage(`${API_URL}/images/treesnroads.png`),
-                utils.loadImage(`${API_URL}/images/nurse.png`), // Load the nurse image
-                utils.loadImage(`${API_URL}/images/akutrum.png`), // Load the new Akutrum image
-                utils.loadImage(`${API_URL}/images/interior1.png`), // Load the interior1 image
-                utils.loadImage(`${API_URL}/images/interior2.png`), // Load the interior2 image for Room 1
-                utils.loadImage(`${API_URL}/images/interior3.png`), // Load the new interior3 image for Room 6
-                utils.loadImage(`${API_URL}/images/armchair4.png`),
-                utils.loadImage(`${API_URL}/images/armchair5.png`),
-                utils.loadImage(`${API_URL}/images/armchair6.png`),
-                utils.loadImage(`${API_URL}/images/sink.png`),
-                utils.loadImage(`${API_URL}/images/handsprit.png`),
-                utils.loadImage(`${API_URL}/images/trashcan.png`)
+                // --- FIX: Use relative paths for images ---
+                utils.loadImage(`/images/kruka2.png`),
+                utils.loadImage(`/images/kruka.png`),
+                utils.loadImage(`/images/chair_to_left.png`),
+                utils.loadImage(`/images/chair_to_right.png`),
+                utils.loadImage(`/images/patient_bed.png`),
+                utils.loadImage(`/images/skrivbord.png`),
+                utils.loadImage(`/images/tree1.png`),
+                utils.loadImage(`/images/treesnroads.png`),
+                utils.loadImage(`/images/nurse.png`), // Load the nurse image
+                utils.loadImage(`/images/akutrum.png`), // Load the new Akutrum image
+                utils.loadImage(`/images/interior1.png`), // Load the interior1 image
+                utils.loadImage(`/images/interior2.png`), // Load the interior2 image for Room 1
+                utils.loadImage(`/images/interior3.png`), // Load the new interior3 image for Room 6
+                utils.loadImage(`/images/armchair4.png`),
+                utils.loadImage(`/images/armchair5.png`),
+                utils.loadImage(`/images/armchair6.png`),
+                utils.loadImage(`/images/sink.png`),
+                utils.loadImage(`/images/handsprit.png`),
+                utils.loadImage(`/images/trashcan.png`)
             ]);
             this.images = { kruka2, kruka, chair_to_right, chair_to_left, patientBed, skrivbord, tree1, treesnroads, nurse: nurseImg, akutrum: akutrumImg, interior1: interior1Img, interior2: interior2Img, interior3: interior3Img, armchair4, armchair5, armchair6, sink, handsprit, trashcan };
 
