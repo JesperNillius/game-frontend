@@ -131,8 +131,9 @@ export default class PlayerManager {
                 if (item.patientAvatar) {
                     // Create a new property with the full, correct URL.
                     // --- IMAGE DEBUG: Log the components of the URL ---
-                    console.log(`[IMAGE DEBUG] Building URL for avatar: '${item.patientAvatar}' with API_URL: '${API_URL}'`);
-                    item.patient_avatar_url = `${API_URL}/images/${item.patientAvatar}`;
+                    // --- FINAL FIX: Use a root-relative path. The frontend static site will serve its own images. ---
+                    console.log(`[IMAGE DEBUG] Building URL for avatar: '${item.patientAvatar}'`);
+                    item.patient_avatar_url = `/images/${item.patientAvatar}`;
                     console.log(`[IMAGE DEBUG] -> Final URL: ${item.patient_avatar_url}`);
                 }
             });
