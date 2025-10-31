@@ -35,7 +35,7 @@ export default class GameInputHandler {
         });
 
         // MainMenu
-        document.getElementById("playBtn").addEventListener("click", () => this.game.startGame());
+        document.getElementById("playBtn").addEventListener("click", () => this.game.handlePlayButtonClick()); // Call the new handler
         document.getElementById('btnReturnToMenu').addEventListener('click', () => this.game.returnToMenu());
         document.getElementById('caseHistoryBtn').addEventListener('click', () => this.game.showCaseHistory());
         document.getElementById('leaderboardBtn').addEventListener('click', () => this.game.showLeaderboard());

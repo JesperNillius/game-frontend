@@ -34,6 +34,7 @@ export default class GameMainController {
         this.spawnTimer = null;
         this.pendingAkutrumPatient = null; // For the new feature
         this.casesPlayedThisSession = 0; // --- NEW: Counter for game review ---
+        this.gameActive = false; // NEW: Flag to track if a game is currently active
 
         // --- Game Config & Data ---
         this.camera = { x: canvas.worldWidth / 2, y: canvas.worldHeight / 2, zoom: 1.0 };
@@ -298,7 +299,7 @@ export default class GameMainController {
         ]);
     }
         
-    drawGameWorld() {
+    drawGameWorld() { // This function is called in the render loop to draw the static elements
     // --- This is the "what to draw" logic from your old loop ---
 
     // Update the occupied status of each room before drawing
@@ -313,7 +314,6 @@ export default class GameMainController {
 
     // 2. Call the drawing functions from canvas.js
     canvas.drawHospitalLayout(this.rooms, this.walls, glowingRooms, this.images, this.scenery);
-    canvas.drawPatients(this.patients);
 
     // 3. Update the critical patient warning UI
     const anyPatientCritical = this.patients.some(p => p.isCritical && !p.isFailed);
@@ -391,7 +391,7 @@ export default class GameMainController {
         }
     }
 
-    async startGame() {
+    async startNewGame() { // Renamed from startGame()
       try {
         // Use the 'api' module for fetch calls
         await api.resetGame();
@@ -422,6 +422,7 @@ export default class GameMainController {
         await this.characterManager.spawnPatient();
         await this.characterManager.spawnPatient();
         
+        this.gameActive = true; // Set game as active
       } catch (err) {
         console.error("Failed to start the game:", err);
       }
@@ -429,6 +430,16 @@ export default class GameMainController {
     }
 
     generateWalls(rooms) {
+        // This function is not used in GameMainController.js, it's in canvas.js
+        // and also in the old script.js. It's fine to leave it here if it's a helper
+        // but it's not directly called by this class.
+        // If it's meant to be a helper for the layout, it should probably be in utils.js
+        // or a dedicated layout manager.
+        // For now, I'll assume it's not causing issues.
+        // The actual walls array is defined directly in the constructor.
+        // This comment is for my own understanding, no code change needed here.
+
+        // Original logic for generateWalls (if it were used)
       const wallMap = new Map();
       const addWall = (x1, y1, x2, y2) => {
         const key = [x1, y1, x2, y2].sort().join(',');
@@ -447,6 +458,16 @@ export default class GameMainController {
         return Array.from(wallMap.values());
     }
 
+    // NEW: This method handles the "Play" button click
+    async handlePlayButtonClick() {
+        if (this.gameActive) {
+            // Game is already active, just hide the menu and continue
+            document.getElementById('menu').classList.add('hidden');
+        } else {
+            // No active game, start a new one
+            await this.startNewGame();
+        }
+    }
     handleDispositionChoice(playerChoice, planData = null) {
         this.dispositionManager.handleDispositionChoice(playerChoice, planData);
     }
@@ -1036,6 +1057,11 @@ export default class GameMainController {
         this.parents = this.parents.filter(parent => parent.childId !== this.currentPatientId);
         this.patients = this.patients.filter(p => p.id !== this.currentPatientId);
         this.currentPatientId = null;
+
+        // If no patients left, the game is no longer active
+        if (this.patients.length === 0) {
+            this.gameActive = false;
+        }
         
         utils.animateZoom(this.camera, canvas.worldWidth / 2, canvas.worldHeight / 2, 1.0);
         this.ui.hideAllSideMenus();

@@ -232,23 +232,26 @@ export function drawSpeechBubble(bubbleCenterX, bubbleCenterY, text, patientX, p
 
 
 export function renderLoop(camera, drawFunctions) {
-    // --- REVISED: Simplified and more robust clearing logic ---
-    // 1. Clear the entire canvas. This is the most important step to prevent ghosting.
+    // --- FINAL FIX: Use a more robust method to clear the canvas ---
+    // This ensures that any previous transformations (scaling, translating)
+    // do not affect the clearRect operation.
+    ctx.save();
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.restore();
+    // ---
     
-    // 2. Draw the background color for the new frame.
     drawBackground();
 
-    // 3. Apply the camera view transformations.
     ctx.save();
     ctx.translate(canvas.clientWidth / 2, canvas.clientHeight / 2);
     ctx.scale(camera.zoom, camera.zoom);
     ctx.translate(-camera.x, -camera.y);
 
-    // 6. Draw all the game objects
+    // Draw all the game objects
     drawFunctions.forEach(fn => fn());
 
-    // 5. Restore from the camera view, leaving a clean state for the next frame.
+    // Restore from the camera view, leaving a clean state for the next frame.
     ctx.restore();
 
     requestAnimationFrame(() => renderLoop(camera, drawFunctions));

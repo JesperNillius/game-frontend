@@ -58,6 +58,15 @@ export default class PlayerManager {
             mainMenu.style.display = 'flex';
             if (this.game.spawnTimer) clearInterval(this.game.spawnTimer);
             this.game.stopVitalsPolling();
+
+            // --- NEW: Change button text based on game state ---
+            const playBtn = document.getElementById('playBtn');
+            if (this.game.gameActive) {
+                playBtn.textContent = "Resume";
+            } else {
+                playBtn.textContent = "Play";
+            }
+
             loginMenu.classList.add('hidden');
         }
     }

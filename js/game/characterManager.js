@@ -25,15 +25,19 @@ export default class CharacterManager {
 
         for (const patient of this.game.patients) {
             ctx.beginPath();
-            const shadowRadius = patient.radius * 1.7;
-            ctx.arc(patient.x + shadowOffsetX, patient.y + shadowOffsetY, shadowRadius, 0, Math.PI * 2);
+            // --- FIX: Round shadow coordinates to match the character's rounded position. ---
+            // This prevents the shadow from "vibrating" behind the character during movement.
+            const shadowX = Math.round(patient.x) + shadowOffsetX;
+            const shadowY = Math.round(patient.y) + shadowOffsetY;
+            ctx.arc(shadowX, shadowY, patient.radius * 1.7, 0, Math.PI * 2);
             ctx.fill();
         }
 
         for (const parent of this.game.parents) {
             ctx.beginPath();
-            const shadowRadius = 14 * 1.7;
-            ctx.arc(parent.x + shadowOffsetX, parent.y + shadowOffsetY, shadowRadius, 0, Math.PI * 2);
+            const shadowX = Math.round(parent.x) + shadowOffsetX;
+            const shadowY = Math.round(parent.y) + shadowOffsetY;
+            ctx.arc(shadowX, shadowY, 14 * 1.7, 0, Math.PI * 2);
             ctx.fill();
         }
 
@@ -41,8 +45,9 @@ export default class CharacterManager {
         const nurse = this.game.nurse;
         if (nurse) {
             ctx.beginPath();
-            const shadowRadius = 14 * 1.7; // Same size as the patient's shadow
-            ctx.arc(nurse.x + shadowOffsetX, nurse.y + shadowOffsetY, shadowRadius, 0, Math.PI * 2);
+            const shadowX = Math.round(nurse.x) + shadowOffsetX;
+            const shadowY = Math.round(nurse.y) + shadowOffsetY;
+            ctx.arc(shadowX, shadowY, 14 * 1.7, 0, Math.PI * 2);
             ctx.fill();
         }
     }
