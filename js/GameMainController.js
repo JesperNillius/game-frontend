@@ -683,7 +683,10 @@ export default class GameMainController {
             const p = this.patients[i];
             const dx = mx - p.x, dy = my - p.y;
             if (Math.hypot(dx, dy) <= p.radius * 2) {
-                if (this.findRoomAt(p.x, p.y)?.name === "Väntrum") p.showTriageGlow = true;
+                // --- FIX: Show triage glow in both the waiting room AND the corridor ---
+                const currentRoom = this.findRoomAt(p.x, p.y)?.name;
+                if (currentRoom === "Väntrum" || currentRoom === "Korridor") p.showTriageGlow = true;
+
                 if (mouseButton === 0) { // Check for left-click
                     this.draggingPatient = p;
                     this.lastDragX = mx;
