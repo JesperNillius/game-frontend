@@ -245,9 +245,6 @@ export default class GameMainController {
         this.inputHandler.init(); // ✅ Initialize the input handler now that the DOM is ready.
         window.addEventListener('resize', canvas.resizeCanvas);
 
-        // Dynamically set the favicon URL
-        document.getElementById('favicon').href = `${API_URL}/favicon.ico`;
-        
         document.getElementById("playBtn").disabled = true;
         document.getElementById("playBtn").textContent = "Loading...";
 
