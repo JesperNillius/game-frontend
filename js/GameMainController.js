@@ -1017,12 +1017,19 @@ export default class GameMainController {
         console.log(`[DEBUG] Cases played this session (after increment): ${this.casesPlayedThisSession}`);
 
         // --- FIX: This logic should run for EVERY patient, not just the second one. ---
-        // --- FIX for Live Server Avatars: Make avatar path absolute before removing patient ---
+        // --- DEBUG for Live Server Avatars: Trace the creation of the absolute URL ---
         const finishedPatient = this.patients.find(p => p.id === this.currentPatientId);
         if (finishedPatient && finishedPatient.patient_avatar) {
+            console.log('[AVATAR TRACE] A. Case finished for patient with avatar:', finishedPatient.patient_avatar);
+            console.log('[AVATAR TRACE] B. API_URL is:', API_URL);
+
             // This ensures that when the case history is rendered later,
             // it uses the full URL to the backend server, which works on live but is harmless on local.
             finishedPatient.patient_avatar_url = `${API_URL}/images/${finishedPatient.patient_avatar}`;
+
+            console.log('[AVATAR TRACE] C. Generated absolute avatar URL:', finishedPatient.patient_avatar_url);
+            console.log('[AVATAR TRACE] D. Patient object before being removed from game:', finishedPatient);
+
             // The UI rendering the case history should now use `patient_avatar_url`.
         }
 
