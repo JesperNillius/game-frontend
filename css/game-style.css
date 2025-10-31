@@ -2187,6 +2187,8 @@
     color: #eee;
     position: sticky;
     top: 0;
+    /* --- FIX: Give the header a higher stacking order than the table rows --- */
+    z-index: 10;
 }
 
 .history-table tbody tr:hover {

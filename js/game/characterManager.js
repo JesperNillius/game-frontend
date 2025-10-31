@@ -6,6 +6,13 @@ import { canvas, ctx } from '../canvas.js';
 export default class CharacterManager {
     constructor(game) {
         this.game = game;
+        // --- NEW: Define walkable areas for wandering patients ---
+        this.walkableAreas = [
+            // Waiting Room
+            { x: 1060, y: 10, w: 200, h: 630 },
+            // Corridor
+            { x: 20, y: 260, w: 1040, h: 170 }
+        ];
     }
 
     drawCharacterShadows() {
@@ -362,7 +369,20 @@ export default class CharacterManager {
             const { radius, Radius, ...restOfPatientData } = patientData;
             const isChild = patientData.age < 18;
 
-            const newPatient = { x, y, radius: isChild ? 12 : 14, color: "red", actionsTaken: [], assignedRoom: null, rotation: 0, ...restOfPatientData, currentVitals: { AF: patientData.AF, Saturation: patientData.Saturation, Puls: patientData.Puls, BT_systolic: patientData.BT_systolic, BT_diastolic: patientData.BT_diastolic, Temp: patientData.Temp, RLS: patientData.RLS }, vitalColors: { AF: utils.getVitalColor('AF', patientData.AF, patientData.age), Saturation: utils.getVitalColor('Saturation', patientData.Saturation, patientData.age), Puls: utils.getVitalColor('Puls', patientData.Puls, patientData.age), BT: utils.getVitalColor('BT_systolic', patientData.BT_systolic, patientData.age), Temp: utils.getVitalColor('Temp', patientData.Temp, patientData.age), RLS: utils.getVitalColor('RLS', patientData.RLS, patientData.age) } };
+            const newPatient = {
+                x, y,
+                radius: isChild ? 12 : 14,
+                color: "red",
+                actionsTaken: [],
+                assignedRoom: null,
+                rotation: 0, ...restOfPatientData,
+                currentVitals: { AF: patientData.AF, Saturation: patientData.Saturation, Puls: patientData.Puls, BT_systolic: patientData.BT_systolic, BT_diastolic: patientData.BT_diastolic, Temp: patientData.Temp, RLS: patientData.RLS },
+                vitalColors: { AF: utils.getVitalColor('AF', patientData.AF, patientData.age), Saturation: utils.getVitalColor('Saturation', patientData.Saturation, patientData.age), Puls: utils.getVitalColor('Puls', patientData.Puls, patientData.age), BT: utils.getVitalColor('BT_systolic', patientData.BT_systolic, patientData.age), Temp: utils.getVitalColor('Temp', patientData.Temp, patientData.age), RLS: utils.getVitalColor('RLS', patientData.RLS, patientData.age) },
+                // --- NEW: Add wandering state for waiting room movement ---
+                wanderingState: 'idle',
+                wanderTarget: null,
+                wanderIdleTimer: Math.random() * 120 + 60 // Wait 1-2 seconds before first move
+            };
             if (newPatient.patient_avatar) newPatient.img = await utils.loadImage(`/images/${newPatient.patient_avatar}`);
             this.game.patients.push(newPatient);
 
@@ -401,7 +421,20 @@ export default class CharacterManager {
         const { radius, Radius, ...restOfPatientData } = patientData;
         const isChild = patientData.age < 18;
 
-        const newPatient = { x, y, radius: isChild ? 12 : 14, color: "red", actionsTaken: [], assignedRoom: akutrum, rotation: 0, ...restOfPatientData, currentVitals: { AF: patientData.AF, Saturation: patientData.Saturation, Puls: patientData.Puls, BT_systolic: patientData.BT_systolic, BT_diastolic: patientData.BT_diastolic, Temp: patientData.Temp, RLS: patientData.RLS }, vitalColors: { AF: utils.getVitalColor('AF', patientData.AF, patientData.age), Saturation: utils.getVitalColor('Saturation', patientData.Saturation, patientData.age), Puls: utils.getVitalColor('Puls', patientData.Puls, patientData.age), BT: utils.getVitalColor('BT_systolic', patientData.BT_systolic, patientData.age), Temp: utils.getVitalColor('Temp', patientData.Temp, patientData.age), RLS: utils.getVitalColor('RLS', patientData.RLS, patientData.age) } };
+        const newPatient = {
+            x, y,
+            radius: isChild ? 12 : 14,
+            color: "red",
+            actionsTaken: [],
+            assignedRoom: akutrum,
+            rotation: 0, ...restOfPatientData,
+            currentVitals: { AF: patientData.AF, Saturation: patientData.Saturation, Puls: patientData.Puls, BT_systolic: patientData.BT_systolic, BT_diastolic: patientData.BT_diastolic, Temp: patientData.Temp, RLS: patientData.RLS },
+            vitalColors: { AF: utils.getVitalColor('AF', patientData.AF, patientData.age), Saturation: utils.getVitalColor('Saturation', patientData.Saturation, patientData.age), Puls: utils.getVitalColor('Puls', patientData.Puls, patientData.age), BT: utils.getVitalColor('BT_systolic', patientData.BT_systolic, patientData.age), Temp: utils.getVitalColor('Temp', patientData.Temp, patientData.age), RLS: utils.getVitalColor('RLS', patientData.RLS, patientData.age) },
+            // --- NEW: Add wandering state, though it won't be used for Akutrum patients ---
+            wanderingState: 'idle',
+            wanderTarget: null,
+            wanderIdleTimer: 0
+        };
         if (newPatient.patient_avatar) newPatient.img = await utils.loadImage(`/images/${newPatient.patient_avatar}`);
         this.game.patients.push(newPatient);
 
@@ -423,16 +456,19 @@ export default class CharacterManager {
         const { radius, Radius, ...restOfPatientData } = patientData;
         const isChild = patientData.age < 18;
 
-        const newPatient = { 
-            x, y, 
-            radius: isChild ? 12 : 14, 
-            color: "red", 
+        const newPatient = {
+            x, y,
+            radius: isChild ? 12 : 14,
+            color: "red",
             actionsTaken: [], // --- FIX: Initialize actionsTaken array ---
-            assignedRoom: null, 
-            rotation: 0, 
-            ...restOfPatientData, 
-            currentVitals: { AF: patientData.AF, Saturation: patientData.Saturation, Puls: patientData.Puls, BT_systolic: patientData.BT_systolic, BT_diastolic: patientData.BT_diastolic, Temp: patientData.Temp, RLS: patientData.RLS }, 
-            vitalColors: { AF: utils.getVitalColor('AF', patientData.AF, patientData.age), Saturation: utils.getVitalColor('Saturation', patientData.Saturation, patientData.age), Puls: utils.getVitalColor('Puls', patientData.Puls, patientData.age), BT: utils.getVitalColor('BT_systolic', patientData.BT_systolic, patientData.age), Temp: utils.getVitalColor('Temp', patientData.Temp, patientData.age), RLS: utils.getVitalColor('RLS', patientData.RLS, patientData.age) } 
+            assignedRoom: null,
+            rotation: 0, ...restOfPatientData,
+            currentVitals: { AF: patientData.AF, Saturation: patientData.Saturation, Puls: patientData.Puls, BT_systolic: patientData.BT_systolic, BT_diastolic: patientData.BT_diastolic, Temp: patientData.Temp, RLS: patientData.RLS },
+            vitalColors: { AF: utils.getVitalColor('AF', patientData.AF, patientData.age), Saturation: utils.getVitalColor('Saturation', patientData.Saturation, patientData.age), Puls: utils.getVitalColor('Puls', patientData.Puls, patientData.age), BT: utils.getVitalColor('BT_systolic', patientData.BT_systolic, patientData.age), Temp: utils.getVitalColor('Temp', patientData.Temp, patientData.age), RLS: utils.getVitalColor('RLS', patientData.RLS, patientData.age) },
+            // --- NEW: Add wandering state for waiting room movement ---
+            wanderingState: 'idle',
+            wanderTarget: null,
+            wanderIdleTimer: Math.random() * 120 + 60 // Wait 1-2 seconds before first move
         };
         if (newPatient.patient_avatar) newPatient.img = await utils.loadImage(`/images/${newPatient.patient_avatar}`);
         this.game.patients.push(newPatient);

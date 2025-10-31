@@ -260,13 +260,82 @@ export default class GameInputHandler {
             this.game.showMenuView('main');
         });
         document.getElementById('caseHistoryModal').addEventListener('click', (e) => {
+            // --- REVISED: Generate detailed feedback on click ---
             const mainRow = e.target.closest('.history-main-row');
             if (!mainRow) return;
-
+        
             const rowId = mainRow.dataset.rowId;
             const detailsRow = document.querySelector(`.history-details-row[data-details-for='${rowId}']`);
-            if (detailsRow) {
-                detailsRow.classList.toggle('hidden');
+            if (!detailsRow) return;
+        
+            // Toggle visibility first
+            const isHidden = detailsRow.classList.toggle('hidden');
+        
+            // If we are showing the details and it hasn't been populated yet
+            if (!isHidden && !detailsRow.dataset.populated) {
+                const historyItem = this.game.ui.getHistoryItemById(rowId); // Assumes ui module can retrieve the data
+                if (!historyItem) return;
+        
+                const playerActions = new Set(historyItem.actionsTaken.map(id => (id || '').toLowerCase()));
+                const { critical, recommended, contraindicated } = historyItem.solutionActions;
+        
+                // --- REVISED: This function now generates HTML for a list of actions with importance indicators ---
+                const generateHtmlForCategory = (title, actions, isCritical) => {
+                    if (!actions || actions.length === 0) return '';
+                    let html = `<h6 class="feedback-category-title">${title}</h6><div class="feedback-items-grid">`;
+                    actions.forEach(actionId => {
+                        const actionIdLower = (Array.isArray(actionId) ? actionId[0] : actionId).toLowerCase();
+                        const wasPerformed = playerActions.has(actionIdLower);
+                        const icon = wasPerformed ? '✓' : '✗';
+                        const cssClass = wasPerformed ? 'correct' : 'missed';
+                        const actionName = this.game.getActionNameById(actionId);
+                        html += `<div class="feedback-task ${cssClass}"><span class="task-icon">${icon}</span><span class="task-name">${actionName}</span></div>`;
+                    });
+                    html += '</div>';
+                    return html;
+                };
+        
+                // --- REVISED: Group all solution actions by their category ---
+                const allSolutionActions = [...critical, ...recommended];
+                const categorizedActions = {
+                    'exam': { title: 'Physical Exam', critical: [], recommended: [] },
+                    'bedside': { title: 'Bedside Tests', critical: [], recommended: [] },
+                    'lab': { title: 'Lab Tests', critical: [], recommended: [] },
+                    'radiology': { title: 'Radiology', critical: [], recommended: [] },
+                    'med': { title: 'Medications', critical: [], recommended: [] },
+                    'consultation': { title: 'Consultations', critical: [], recommended: [] },
+                    'pci': { title: 'Interventions', critical: [], recommended: [] },
+                    'trombolys': { title: 'Interventions', critical: [], recommended: [] },
+                    'surgery': { title: 'Interventions', critical: [], recommended: [] },
+                };
+
+                allSolutionActions.forEach(action => {
+                    const categoryKey = this.game.getActionCategory(action);
+                    if (categorizedActions[categoryKey]) {
+                        const isCritical = critical.some(c => JSON.stringify(c) === JSON.stringify(action));
+                        if (isCritical) {
+                            categorizedActions[categoryKey].critical.push(action);
+                        } else {
+                            categorizedActions[categoryKey].recommended.push(action);
+                        }
+                    }
+                });
+        
+                const performedContraindicated = contraindicated.filter(id => playerActions.has((id || '').toLowerCase()));
+                let finalHtml = '';
+                Object.values(categorizedActions).forEach(cat => {
+                    if (cat.critical.length > 0 || cat.recommended.length > 0) {
+                        finalHtml += generateHtmlForCategory(cat.title, [...cat.critical, ...cat.recommended], cat.critical.length > 0);
+                    }
+                });
+        
+                const detailsContent = detailsRow.querySelector('.history-details-content');
+                detailsContent.innerHTML = `
+                    <div class="feedback-section">
+                        ${finalHtml || '<p>No specific actions were required for this case.</p>'}
+                    </div>
+                `;
+                detailsRow.dataset.populated = 'true'; // Mark as populated
             }
         });
 

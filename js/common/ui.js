@@ -11,6 +11,9 @@ const bedsideContent = document.getElementById('bedsideTestContent');
 const radiologyContent = document.getElementById('radiologyResultsContent');
 const criticalWarningOverlay = document.getElementById('critical-warning-overlay');
 
+// --- NEW: Store the last fetched history data for on-demand rendering ---
+let lastRenderedHistory = [];
+
 // Exported UI functions
 
 // MainMenu
@@ -728,7 +731,9 @@ export function showSubmenu(menuIdToShow) {
     console.log(`[DEBUG] 4. showSubmenu() is showing '${menuIdToShow}'.`);
 }
 
-export function renderCaseHistory(history, getActionNameById, getActionCategory) {
+export function renderCaseHistory(history) {
+    lastRenderedHistory = history; // Store the history data
+
     const container = document.getElementById('caseHistoryContent');
     if (history.length === 0) {
         container.innerHTML = '<p class="no-items-message">You have no case history yet.</p>';
@@ -774,16 +779,8 @@ export function renderCaseHistory(history, getActionNameById, getActionCategory)
             </tr>
             <tr class="history-details-row hidden" data-details-for="${index}">
                 <td colspan="3">
-                    <div class="history-details-content">
-                        <h6>Critical Actions</h6>
-                        <ul>
-                            ${item.solutionActions.critical.map(id => `<li>${getActionNameById(id)}</li>`).join('')}
-                        </ul>
-                        <h6>Recommended Actions</h6>
-                        <ul>
-                            ${item.solutionActions.recommended.map(id => `<li>${getActionNameById(id)}</li>`).join('')}
-                        </ul>
-                    </div>
+                    <!-- The content is now generated on-demand by GameInputHandler.js -->
+                    <div class="history-details-content"></div>
                 </td>
             </tr>
         `;
@@ -791,6 +788,16 @@ export function renderCaseHistory(history, getActionNameById, getActionCategory)
 
     tableHTML += `</tbody></table>`;
     container.innerHTML = tableHTML;
+}
+
+/**
+ * Retrieves a specific item from the last rendered case history.
+ * @param {string} rowId - The index of the item to retrieve.
+ * @returns {object|null} The history item object or null if not found.
+ */
+export function getHistoryItemById(rowId) {
+    if (!lastRenderedHistory || lastRenderedHistory.length === 0) return null;
+    return lastRenderedHistory[parseInt(rowId, 10)];
 }
 
 export function renderCheckboxButtons(items, containerId, selectedIdsSet) {

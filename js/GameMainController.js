@@ -1073,6 +1073,12 @@ export default class GameMainController {
     }
 
     getActionCategory(id) {
+        // --- FIX: Handle cases where the 'id' is an array (for OR conditions). ---
+        // If it's an array, we determine the category based on its first element,
+        // as all choices in the group should belong to the same category.
+        if (Array.isArray(id)) {
+            return id.length > 0 ? this.getActionCategory(id[0]) : 'unknown';
+        }
         const lowerCaseId = (id || '').toLowerCase();
     
         // This logic now mirrors the robust backend categorization.

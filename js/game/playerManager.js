@@ -116,7 +116,7 @@ export default class PlayerManager {
     async showCaseHistory() {
         try {
             const history = await api.getCaseHistory();
-            this.ui.renderCaseHistory(history, (id) => this.game.getActionNameById(id), (id) => this.game.getActionCategory(id));
+            this.ui.renderCaseHistory(history);
             document.getElementById('menu').classList.add('hidden');
             document.getElementById('caseHistoryModal').classList.add('visible');
         } catch (error) {
