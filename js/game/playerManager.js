@@ -1,4 +1,5 @@
 import * as api from '../api.js';
+import { API_URL } from '../api.js'; // Import the missing constant
 
 export default class PlayerManager {
     constructor(game) {
@@ -10,6 +11,9 @@ export default class PlayerManager {
         try {
             const status = await api.checkAuthStatus();
             // --- NEW: Store user settings on the game controller ---
+            // --- AUTH DEBUG: Log initial authentication status ---
+            console.log('[AUTH TRACE] Initial auth status check on page load:', status);
+            // ---
             this.game.userSettings = status.user?.settings || { showAkutrumIntro: true };
             if (status.user) {
                 this.updateUserUI(status.user);
@@ -121,9 +125,12 @@ export default class PlayerManager {
             // This is the correct place to fix the paths, as this data comes
             // directly from the database and doesn't know about the frontend's file structure.
             history.forEach(item => {
-                if (item.patient && item.patient.patient_avatar) {
+                // --- FIX: Add a null check to prevent crashes if a history item is missing patient data ---
+                if (!item) return; // If the item is null, skip to the next one.
+
+                if (item.patientAvatar) {
                     // Create a new property with the full, correct URL.
-                    item.patient.patient_avatar_url = `${API_URL}/images/${item.patient.patient_avatar}`;
+                    item.patient_avatar_url = `${API_URL}/images/${item.patientAvatar}`;
                 }
             });
             // --- END FIX ---
@@ -132,6 +139,9 @@ export default class PlayerManager {
             document.getElementById('menu').classList.add('hidden');
             document.getElementById('caseHistoryModal').classList.add('visible');
         } catch (error) {
+            // --- AUTH DEBUG: Log the specific error when fetching case history fails ---
+            console.error('[AUTH TRACE] Error fetching case history. This is likely an auth failure. Error:', error);
+            // ---
             this.showMenuView('login');
         }
     }
