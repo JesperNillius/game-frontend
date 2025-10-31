@@ -3026,3 +3026,126 @@ body.ipad #gameCanvas {
     margin: 0;
     font-weight: bold;
 }
+/* Add this to your game-style.css file */
+
+.review-question {
+    margin-bottom: 25px;
+}
+
+.review-question p {
+    margin: 0 0 10px 0;
+    font-weight: 600;
+    color: #e0e0e0;
+}
+
+.modal-body {
+    /* --- NEW: Add space between header and body content --- */
+    padding-top: 20px;
+}
+
+/* Star Rating */
+.star-rating-group {
+    display: inline-block;
+    direction: rtl; /* Right to left to make the hover effect work correctly */
+}
+.star-rating-group input[type="radio"] {
+    display: none;
+}
+.star-rating-group label {
+    font-size: 36px;
+    color: #888;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+.star-rating-group input[type="radio"]:checked ~ label,
+.star-rating-group label:hover,
+.star-rating-group label:hover ~ label {
+    color: #FFC107;
+}
+
+/* Number Rating (1-5) */
+.number-rating-group {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+/* --- NEW: Center the rating groups --- */
+.number-rating-group.centered-group {
+    justify-content: center;
+    gap: 20px; /* Add more space between labels and numbers */
+}
+.number-rating-group > span {
+    font-size: 0.8em;
+    color: #aaa;
+    flex-shrink: 0;
+}
+.rating-numbers {
+    display: flex;
+    justify-content: center;
+    flex-grow: 1;
+}
+
+/* --- NEW: Allow semester blocks to wrap --- */
+.semester-group {
+    flex-wrap: wrap;
+    justify-content: flex-start; /* Align blocks to the start */
+}
+.rating-numbers input[type="radio"] {
+    display: none;
+}
+.rating-numbers label {
+    display: inline-block;
+    width: 40px; /* Make the circles a bit larger */
+    height: 40px;
+    line-height: 40px;
+    border: 1px solid #555;
+    cursor: pointer;    margin-bottom: 8px; /* --- NEW: Add space between rows of semester buttons --- */
+    margin: 0 5px; /* Add more space between circles */
+    transition: background-color 0.2s, color 0.2s;
+    /* --- REVISED: Make them squares --- */
+    border-radius: 6px;
+    /* --- NEW: Add a subtle background color to make buttons stand out --- */
+    background-color: #3c3c42;
+    text-align: center;
+}
+/* --- NEW: Make the 'Examen' button wider --- */
+.rating-numbers label[for="sem-grad"] {
+    width: auto; /* Let the width be determined by the content */
+    padding: 0 15px; /* Add horizontal padding */
+}
+
+.rating-numbers label:hover {
+    background-color: #4a4a4a;
+}
+.rating-numbers input[type="radio"]:checked + label {
+    background-color: #2274A5;
+    border-color: #2274A5;
+    color: #fff;
+}
+
+/* Feedback Textarea */
+.feedback-textarea {
+    width: 100%;
+    min-height: 80px;
+    padding: 10px;
+    background-color: #1c1c1e;
+    border: 1px solid #444;
+    border-radius: 6px;
+    color: #fff;
+    resize: vertical;
+}
+
+/* --- NEW: Styling for the review modal dropdown --- */
+.review-select {
+    width: 100%;
+    padding: 10px;
+    background-color: #1c1c1e;
+    border: 1px solid #555;
+    border-radius: 6px;
+    color: #fff;
+    font-size: 1em;
+    -webkit-appearance: none; /* Removes default browser styling on iOS */
+    appearance: none;
+    cursor: pointer;
+}

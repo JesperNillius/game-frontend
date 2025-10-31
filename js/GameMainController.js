@@ -33,6 +33,7 @@ export default class GameMainController {
         this.statusPollTimer = null;
         this.spawnTimer = null;
         this.pendingAkutrumPatient = null; // For the new feature
+        this.casesPlayedThisSession = 0; // --- NEW: Counter for game review ---
 
         // --- Game Config & Data ---
         this.camera = { x: canvas.worldWidth / 2, y: canvas.worldHeight / 2, zoom: 1.0 };
@@ -56,18 +57,18 @@ export default class GameMainController {
         this.rooms = [
         // Waiting Room (tall, on the right) - RESIZED
         { x: 1060, y: 10, w: 200, h: 630, name: "Väntrum", furniture: [
-            { x: 10, y: 25, w: 60, image: 'chair_to_left',},
-            { x: 10, y: 100, w: 60, image: 'chair_to_left',},
-            { x: 10, y: 480, w: 60, image: 'chair_to_left',},
-            { x: 10, y: 555, w: 60, image: 'chair_to_left',},
-            { x: 135, y: 25, w: 60, image: 'chair_to_right' },
-            { x: 135, y: 100, w: 60, image: 'chair_to_right',},
-            { x: 135, y: 175, w: 60, image: 'chair_to_right',},
-            { x: 135, y: 405, w: 60, image: 'chair_to_right',},
-            { x: 135, y: 480, w: 60, image: 'chair_to_right',},
-            { x: 135, y: 555, w: 60, image: 'chair_to_right',},
-            { x: 10, y: 205, w: 50, image: 'kruka',},
-            { x: 0, y: 380, w: 80, image: 'kruka2',},
+            { x: 10, y: 25, w: 60, h: 60, image: 'chair_to_left',},
+            { x: 10, y: 100, w: 60, h: 60, image: 'chair_to_left',},
+            { x: 10, y: 480, w: 60, h: 60, image: 'chair_to_left',},
+            { x: 10, y: 555, w: 60, h: 60, image: 'chair_to_left',},
+            { x: 135, y: 25, w: 60, h: 60, image: 'chair_to_right' },
+            { x: 135, y: 100, w: 60, h: 60, image: 'chair_to_right',},
+            { x: 135, y: 175, w: 60, h: 60, image: 'chair_to_right',},
+            { x: 135, y: 405, w: 60, h: 60, image: 'chair_to_right',},
+            { x: 135, y: 480, w: 60, h: 60, image: 'chair_to_right',},
+            { x: 135, y: 555, w: 60, h: 60, image: 'chair_to_right',},
+            { x: 10, y: 205, w: 50, h: 50, image: 'kruka',},
+            { x: 0, y: 380, w: 80, h: 80, image: 'kruka2',},
         ]},
 
         // Corridor (long, in the middle) - RESIZED
@@ -289,6 +290,7 @@ export default class GameMainController {
             () => this.characterManager.drawCharacterShadows(), // Draw all shadows first
             () => this.characterManager.updateNurse(),
             () => this.characterManager.drawNurse(),
+            () => this.characterManager.updateWanderingPatients(), // --- NEW: Update patient movement ---
             () => this.characterManager.updateParents(),
             () => this.characterManager.drawParents(),
             () => canvas.drawPatients(this.patients),
@@ -647,6 +649,15 @@ export default class GameMainController {
                 this.currentPatientId = this.selectedPatient.id;
                 this.enterRoomView(clickedRoom, this.selectedPatient);
             }
+            // --- NEW: Deselect patient and hide vitals if clicking elsewhere in the waiting room ---
+            else if (clickedRoom && clickedRoom.name === 'Väntrum') {
+                this.selectedPatient.showTriageGlow = false; // Turn off glow
+                this.selectedPatient = null;
+                this.ui.hideAllSideMenus(); // This will hide the vitals popup
+                return;
+            }
+            // --- End of new logic ---
+
             this.selectedPatient = null;
             return;
         }
@@ -673,8 +684,14 @@ export default class GameMainController {
         // --- FIX: Only hide menus if the click was on the canvas itself ---
         // This prevents clicks on UI buttons from incorrectly closing menus.
         const eventTarget = (typeof button === 'object' && button !== null) ? button.target : null;
-        if (this.camera.zoom === 1 && eventTarget && eventTarget.id === 'gameCanvas') {
-            this.ui.hideAllSideMenus();
+        if (eventTarget && eventTarget.id === 'gameCanvas') {
+            if (this.camera.zoom === 1) {
+                // When zoomed out, a background click hides everything.
+                this.ui.hideAllSideMenus();
+            } else {
+                // When zoomed in, a background click only hides the action submenus.
+                this.ui.showSubmenu(null);
+            }
         }
     }
 
@@ -989,59 +1006,86 @@ export default class GameMainController {
     }
     
     // FEEDBACK
-    showRatingModal = () => this.dispositionManager.showRatingModal();
 
     closeFeedbackReport() {
+        console.log('[DEBUG] closeFeedbackReport called.');
         document.getElementById('feedbackModal').classList.remove('visible');
 
-        // ✅ FIX: Remove the discharged patient and their parent from the simulation.
-        if (this.currentPatientId !== null) {
-            this.parents = this.parents.filter(parent => parent.childId !== this.currentPatientId);
-            this.patients = this.patients.filter(p => p.id !== this.currentPatientId);
-            this.currentPatientId = null;
+        // --- NEW: Game Review Logic ---
+        console.log(`[DEBUG] Cases played this session (before increment): ${this.casesPlayedThisSession}`);
+        this.casesPlayedThisSession++;
+        console.log(`[DEBUG] Cases played this session (after increment): ${this.casesPlayedThisSession}`);
+
+        // --- FIX: This logic should run for EVERY patient, not just the second one. ---
+        // --- FIX for Live Server Avatars: Make avatar path absolute before removing patient ---
+        const finishedPatient = this.patients.find(p => p.id === this.currentPatientId);
+        if (finishedPatient && finishedPatient.patient_avatar) {
+            // This ensures that when the case history is rendered later,
+            // it uses the full URL to the backend server, which works on live but is harmless on local.
+            finishedPatient.patient_avatar_url = `${API_URL}/images/${finishedPatient.patient_avatar}`;
+            // The UI rendering the case history should now use `patient_avatar_url`.
         }
 
-        // ✅ FIX: Instead of showing the menu, just zoom out and continue the game.
+        this.parents = this.parents.filter(parent => parent.childId !== this.currentPatientId);
+        this.patients = this.patients.filter(p => p.id !== this.currentPatientId);
+        this.currentPatientId = null;
+        
         utils.animateZoom(this.camera, canvas.worldWidth / 2, canvas.worldHeight / 2, 1.0);
         this.ui.hideAllSideMenus();
 
         // ✅ FIX: Show the top UI bar again when returning to the main view.
         document.getElementById('top-ui-bar').classList.remove('hidden');
-    }
 
-    async submitCaseRating(rating) {
-        if (!this.currentPatientId) return;
-
-        try {
-            await api.rateCase(this.currentPatientId, rating, ''); // Submit rating without text first
+        // --- REVISED: Check for review modal AFTER zooming out ---
+        if (this.casesPlayedThisSession >= 2) {
+            console.log('[DEBUG] Condition met (>= 2 cases). Will show review modal after zoom.');
+            this.casesPlayedThisSession = 0; // Reset the counter
             
-            // Close the star modal and open the text feedback modal
-            document.getElementById('starRatingModal').classList.remove('visible');
-            document.getElementById('textFeedbackModal').classList.add('visible');
-            document.getElementById('ratingFeedbackText').focus(); // Focus the textarea
-        } catch (error) {
-            console.error("Failed to submit case rating:", error);
-            // If rating fails, just close everything to not block the user
-            this.closeFeedbackReport();
+            // Wait for the zoom animation (400ms) to finish before showing the modal.
+            setTimeout(() => {
+                this.showGameRatingModal();
+            }, 500); // 500ms delay
+
+            return; // Stop here to show the rating modal after the delay
         }
     }
 
-    async submitFeedbackText(feedbackText) {
-        if (!this.currentPatientId) return;
+    showGameRatingModal() {
+        console.log('[DEBUG] showGameRatingModal called. Attempting to show #gameReviewModal.');
+        // --- FIX: Remove the 'hidden' class and add the 'visible' class ---
+        const reviewModal = document.getElementById('gameReviewModal');
+        reviewModal.classList.remove('hidden');
+        reviewModal.classList.add('visible');
+        console.log('[DEBUG] #gameReviewModal should now be visible.');
+    }
+
+    async submitGameReview() {
+        // --- NEW: Gather all data from the new modal and submit ---
+        const reviewData = {
+            semester: document.querySelector('input[name="semester"]:checked')?.value,
+            educationalValue: document.querySelector('input[name="educationalValue"]:checked')?.value,
+            recommendLikelihood: document.querySelector('input[name="recommendLikelihood"]:checked')?.value,
+            purchaseLikelihood: document.querySelector('input[name="purchaseLikelihood"]:checked')?.value,
+            improvementSuggestions: document.getElementById('improvementSuggestions').value
+        };
+
         try {
-            // The rating is already saved, now we just add the feedback text to it.
-            await api.rateCase(this.currentPatientId, null, feedbackText);
+            await api.submitGameReview(reviewData);
+            this.finishRatingProcess(); // Close modal on success
         } catch (error) {
-            console.error("Failed to submit feedback text:", error);
+            console.error("Failed to submit game review:", error);
+            alert('Could not submit feedback. Please try again.');
         }
-        // After submitting text, finish the process.
-        this.finishRatingProcess();
     }
 
     finishRatingProcess() {
-        // First, hide the text feedback modal
-        document.getElementById('textFeedbackModal').classList.remove('visible');
-        // Then, call the main function to clean up the case and return to the game
+        document.getElementById('gameReviewModal').classList.remove('visible');
+        
+        // --- NEW: The case cleanup is now separate from the rating process. ---
+        // We just need to hide the modals and continue. The case cleanup
+        // already happened in closeFeedbackReport.
+        utils.animateZoom(this.camera, canvas.worldWidth / 2, canvas.worldHeight / 2, 1.0);
+        this.ui.hideAllSideMenus();
         this.closeFeedbackReport();
     }
 

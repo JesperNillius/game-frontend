@@ -7,11 +7,14 @@ export default class CharacterManager {
     constructor(game) {
         this.game = game;
         // --- NEW: Define walkable areas for wandering patients ---
+        // --- REVISED: Added padding to keep patients away from walls and room entrances ---
+        const corridorPadding = 30; // How far to stay from the room doors
+        const waitingRoomPadding = 20; // How far to stay from the waiting room walls
         this.walkableAreas = [
             // Waiting Room
-            { x: 1060, y: 10, w: 200, h: 630 },
+            { x: 1060 + waitingRoomPadding, y: 10 + waitingRoomPadding, w: 200 - (waitingRoomPadding * 2), h: 630 - (waitingRoomPadding * 2) },
             // Corridor
-            { x: 20, y: 260, w: 1040, h: 170 }
+            { x: 20, y: 260 + corridorPadding, w: 1040, h: 170 - (corridorPadding * 2) }
         ];
     }
 
@@ -242,7 +245,9 @@ export default class CharacterManager {
     }
 
     updateParents() {
-        const followDistance = 55;
+        const followDistance = 65; // The ideal distance to maintain from the child.
+        const stoppingDistance = 5;  // How close to the target point the parent must be to stop.
+
         for (const parent of this.game.parents) {
             const child = this.game.patients.find(p => p.id === parent.childId);
 
@@ -268,20 +273,157 @@ export default class CharacterManager {
                     parent.y += (dy / distance) * speed;
                     parent.rotation = Math.atan2(dy, dx) + Math.PI / 2;
                 }
-
             } else if (child && parent.state !== 'at_armchair') {
-                // This is the original "following" logic
-                const oldX = parent.x;
-                const oldY = parent.y;
-                const offset = followDistance * 0.707;
-                const targetX = child.x - offset;
-                const targetY = child.y - offset;
-                parent.x += (targetX - parent.x) * 0.1;
-                parent.y += (targetY - parent.y) * 0.1;
-                const dx = parent.x - oldX;
-                const dy = parent.y - oldY;
-                if (Math.hypot(dx, dy) > 0.1) {
-                    parent.rotation = Math.atan2(dy, dx) + Math.PI / 2;
+                const dxToChild = child.x - parent.x;
+                const dyToChild = child.y - parent.y;
+                const distanceToChild = Math.hypot(dxToChild, dyToChild);
+
+                // --- RE-APPLYING OPTION 2: Move towards a target point for smooth following ---
+
+                // 1. Define the target point: a spot `followDistance` away from the child.
+                // This is where the parent *wants* to be.
+                const targetX = child.x - (dxToChild / distanceToChild) * followDistance;
+                const targetY = child.y - (dyToChild / distanceToChild) * followDistance;
+
+                // 2. Calculate the vector from the parent to this target point.
+                const dxToTarget = targetX - parent.x;
+                const dyToTarget = targetY - parent.y;
+                const distanceToTarget = Math.hypot(dxToTarget, dyToTarget);
+
+                // 3. Only move if the parent is not at the stopping distance.
+                // This creates a "dead zone" to prevent vibrating.
+                if (distanceToTarget > stoppingDistance) {
+                    // 4. Speed is proportional to the distance from the target.
+                    // The parent slows down as it gets closer, creating a smooth "arrive" effect.
+                    const speed = Math.min(4.0, distanceToTarget * 0.05); // Capped at a max speed of 4.0
+                    parent.x += (dxToTarget / distanceToTarget) * speed;
+                    parent.y += (dyToTarget / distanceToTarget) * speed;
+                    parent.rotation = Math.atan2(dyToChild, dxToChild) + Math.PI / 2;
+                }
+            }
+        }
+    }
+
+    findNearestChair(patient) {
+        console.log(`[ChairFinder] Starting search for patient ${patient.name}.`);
+        const waitingRoom = this.game.rooms.find(r => r.name === 'Väntrum');
+        if (!waitingRoom || !waitingRoom.furniture) {
+            console.log('[ChairFinder] -> ERROR: Waiting room or its furniture not found.');
+            return null;
+        }
+        console.log('[ChairFinder] Waiting room furniture list:', waitingRoom.furniture);
+
+        // --- FIX: Pre-calculate target coordinates for all chairs first. ---
+        const chairs = waitingRoom.furniture
+            .filter(f => f.image && f.image.includes('chair'))
+            .map(chair => ({
+                ...chair,
+                targetX: waitingRoom.x + chair.x + chair.w / 2,
+                targetY: waitingRoom.y + chair.y + chair.h / 2,
+                // --- NEW: Determine the correct final rotation based on the chair's image ---
+                finalRotation: (() => {
+                    if (chair.image.includes('chair_to_left')) { // --- FIX: Swapped rotation values ---
+                        return Math.PI / 2; // Face right
+                    } else if (chair.image.includes('chair_to_right')) {
+                        return 3 * Math.PI / 2; // Face left
+                    }
+                    return 0; // Default rotation if needed
+                })()
+            }));
+
+        console.log(`[ChairFinder] Found ${chairs.length} potential chair objects.`);
+
+        let nearestChair = null;
+        let minDistance = Infinity;
+
+        const isChairOccupied = (chair) => {
+            const isOccupied = this.game.patients.some(p => p.wanderingState === 'sitting' && p.wanderTarget && p.wanderTarget.x === chair.targetX && p.wanderTarget.y === chair.targetY);
+            console.log(`[ChairFinder] -> Checking chair at (${chair.targetX.toFixed(0)}, ${chair.targetY.toFixed(0)}). Is occupied? ${isOccupied}`);
+            return isOccupied;
+        };
+
+        chairs.forEach(chair => {
+            if (!isChairOccupied(chair)) {
+                const distance = Math.hypot(patient.x - chair.targetX, patient.y - chair.targetY);
+                console.log(`[ChairFinder] -> -> Available chair found. Distance: ${distance.toFixed(0)}`);
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    nearestChair = chair;
+                    console.log(`[ChairFinder] -> -> -> This is the new nearest chair.`);
+                }
+            }
+        });
+
+        console.log('[ChairFinder] Search complete. Nearest available chair:', nearestChair);
+        return nearestChair;
+    }
+
+    updateWanderingPatients() {
+        const speed = 1.5; // A slow, strolling speed
+
+        for (const patient of this.game.patients) {
+            if (patient.assignedRoom !== null || this.game.draggingPatient === patient) {
+                continue;
+            }
+
+            // --- NEW: Symptomatic Behavior ---
+            const vitals = patient.currentVitals;
+            const isUnwell = (vitals.RLS >= 2 || vitals.BT_systolic < 100);
+
+            // --- REVISED: Handle state transitions first, then movement ---
+
+            // 1. Determine the patient's next state if they are currently idle or need to change behavior.
+            if (patient.wanderingState === 'idle') {
+                patient.wanderIdleTimer--;
+                if (patient.wanderIdleTimer <= 0) {
+                    if (isUnwell) {
+                        console.log(`[DEBUG] Patient ${patient.name} is unwell and idle timer is up. Attempting to find a chair.`);
+                        const chair = this.findNearestChair(patient);
+                        if (chair) {
+                            console.log(`[DEBUG] -> Success! Found chair. Setting state to 'moving_to_chair'.`);
+                            patient.wanderingState = 'moving_to_chair';
+                            patient.wanderTarget = { x: chair.targetX, y: chair.targetY };
+                            patient.wanderPath = [patient.wanderTarget];
+                            patient.finalRotation = chair.finalRotation; // Use the new property
+                        } else {
+                            // --- NEW: Log if no chair is found ---
+                            console.log(`[DEBUG] -> Failed. No available chair found for ${patient.name}. They will remain idle.`);
+                            patient.wanderIdleTimer = 120; // Wait a couple of seconds before trying again.
+                        }
+                    } else {
+                        // Healthy patient starts wandering
+                        patient.wanderingState = 'wandering';
+                        const area = this.walkableAreas[Math.floor(Math.random() * this.walkableAreas.length)];
+                        const newTarget = { x: area.x + Math.random() * area.w, y: area.y + Math.random() * area.h };
+                        const waypoint = { x: 1050, y: 345 };
+                        const isPatientInCorridor = patient.x < 1060;
+                        const isTargetInCorridor = newTarget.x < 1060;
+                        patient.wanderPath = (isPatientInCorridor !== isTargetInCorridor) ? [waypoint, newTarget] : [newTarget];
+                        patient.wanderTarget = patient.wanderPath.shift();
+                    }
+                }
+            }
+
+            // 2. Handle movement for any patient that is in a moving state.
+            if ((patient.wanderingState === 'wandering' || patient.wanderingState === 'moving_to_chair') && patient.wanderTarget) {
+                const dx = patient.wanderTarget.x - patient.x;
+                const dy = patient.wanderTarget.y - patient.y;
+                const distance = Math.hypot(dx, dy);
+
+                if (distance < speed) {
+                    if (patient.wanderPath && patient.wanderPath.length > 0) {
+                        patient.wanderTarget = patient.wanderPath.shift();
+                    } else if (patient.wanderingState === 'moving_to_chair') {
+                        patient.wanderingState = 'sitting';
+                        patient.rotation = patient.finalRotation;
+                    } else {
+                        patient.wanderingState = 'idle';
+                        patient.wanderIdleTimer = Math.random() * 600 + 180; // Wait 3-10 seconds
+                    }
+                } else {
+                    patient.x += (dx / distance) * speed;
+                    patient.y += (dy / distance) * speed;
+                    patient.rotation = Math.atan2(dy, dx) + Math.PI / 2;
                 }
             }
         }

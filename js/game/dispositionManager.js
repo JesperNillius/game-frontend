@@ -239,19 +239,10 @@ export default class DispositionManager {
         this.game.playerManager.returnToMenu();
     }
 
-    showRatingModal() {
-        document.getElementById('feedbackModal').classList.remove('visible');
-        document.getElementById('starRatingModal').classList.add('visible');
-    }
-
     async submitCaseRating(rating, feedbackText) {
-        if (!this.game.currentPatientId) return;
-        try {
-            await api.rateCase(this.game.currentPatientId, rating, feedbackText);
-        } catch (error) {
-            console.error("Failed to submit case rating:", error);
-        }
-        document.getElementById('ratingModal').classList.remove('visible');
+        // This logic is now handled by GameMainController.js for general game reviews.
+        // This function can be removed or left empty.
+        console.warn('submitCaseRating in dispositionManager is deprecated.');
         this.closeFeedbackReport();
     }
 }

@@ -594,32 +594,85 @@
     </div>
   </div>
 
-  <!-- MODAL 1: Star Rating (Mandatory) -->
-  <div id="starRatingModal" class="modal-backdrop">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h2>Rate this Case</h2>
-        </div>
-        <div class="modal-body">
-            <p>How would you rate the quality and educational value of this case?</p>
-            <div id="starRatingStars" class="star-rating-container">
-                <span class="star" data-value="1">☆</span>
-                <span class="star" data-value="2">☆</span>
-                <span class="star" data-value="3">☆</span>
-                <span class="star" data-value="4">☆</span>
-                <span class="star" data-value="5">☆</span>
-            </div>
-        </div>
-    </div>
-  </div>
+  <!-- NEW: Combined Game Review Modal -->
+  <div id="gameReviewModal" class="modal-backdrop hidden">
+      <div class="modal-content">
+          <div class="modal-header">
+              <h2>Review AQTEN</h2>
+          </div>
+          <div class="modal-body">
+              <div class="review-question">
+                  <p>Vilken termin studerar du?</p>
+                  <div class="rating-numbers semester-group">
+                      <input type="radio" id="sem1" name="semester" value="1"><label for="sem1">1</label>
+                      <input type="radio" id="sem2" name="semester" value="2"><label for="sem2">2</label>
+                      <input type="radio" id="sem3" name="semester" value="3"><label for="sem3">3</label>
+                      <input type="radio" id="sem4" name="semester" value="4"><label for="sem4">4</label>
+                      <input type="radio" id="sem5" name="semester" value="5"><label for="sem5">5</label>
+                      <input type="radio" id="sem6" name="semester" value="6"><label for="sem6">6</label>
+                      <input type="radio" id="sem7" name="semester" value="7"><label for="sem7">7</label>
+                      <input type="radio" id="sem8" name="semester" value="8"><label for="sem8">8</label>
+                      <input type="radio" id="sem9" name="semester" value="9"><label for="sem9">9</label>
+                      <input type="radio" id="sem10" name="semester" value="10"><label for="sem10">10</label>
+                      <input type="radio" id="sem11" name="semester" value="11"><label for="sem11">11</label>
+                      <input type="radio" id="sem12" name="semester" value="12"><label for="sem12">12</label>
+                      <input type="radio" id="sem-grad" name="semester" value="examinerad"><label for="sem-grad">Examinerad</label>
+                  </div>
+              </div>
+              <div class="review-question">
+                  <p>Hur lärorikt upplever du AQTEN?</p>
+                  <div class="number-rating-group centered-group">
+                      <span>Inte alls</span>
+                      <div class="rating-numbers">
+                          <input type="radio" id="edu1" name="educationalValue" value="1"><label for="edu1">1</label>
+                          <input type="radio" id="edu2" name="educationalValue" value="2"><label for="edu2">2</label>
+                          <input type="radio" id="edu3" name="educationalValue" value="3"><label for="edu3">3</label>
+                          <input type="radio" id="edu4" name="educationalValue" value="4"><label for="edu4">4</label>
+                          <input type="radio" id="edu5" name="educationalValue" value="5"><label for="edu5">5</label>
+                      </div>
+                      <span>Väldigt lärorikt!</span>
+                  </div>
+              </div>
 
-  <!-- MODAL 2: Text Feedback (Optional) -->
-  <div id="textFeedbackModal" class="modal-backdrop">
-    <div class="modal-content">
-        <div class="modal-header"><h2>Optional Feedback</h2></div>
-        <div class="modal-body"><textarea id="ratingFeedbackText" class="feedback-textarea" placeholder="Any suggestions or comments..."></textarea></div>
-        <div class="modal-footer"><button id="btnSubmitTextFeedback" class="btn-action-final" disabled>Submit</button><button id="btnSkipTextFeedback" class="btn-secondary">Skip</button></div>
-    </div>
+              <div class="review-question">
+                  <p>Hur sannolikt är det att du rekommenderar AQTEN till andra?</p>
+                  <div class="number-rating-group centered-group">
+                      <span>Inte alls</span>
+                      <div class="rating-numbers">
+                          <input type="radio" id="rec1" name="recommendLikelihood" value="1"><label for="rec1">1</label>
+                          <input type="radio" id="rec2" name="recommendLikelihood" value="2"><label for="rec2">2</label>
+                          <input type="radio" id="rec3" name="recommendLikelihood" value="3"><label for="rec3">3</label>
+                          <input type="radio" id="rec4" name="recommendLikelihood" value="4"><label for="rec4">4</label>
+                          <input type="radio" id="rec5" name="recommendLikelihood" value="5"><label for="rec5">5</label>
+                      </div>
+                      <span> Väldigt sannolikt! </span>
+                  </div>
+              </div>
+
+              <div class="review-question">
+                  <p>I fullversionen får du tillgång till fler fall och kan öva inom specialiteter. Baserat på det du upplevt hittills, hur sannolikt är det att du skulle köpa fullversionen? </p>
+                  <div class="number-rating-group centered-group">
+                      <span>Inte alls</span>
+                       <div class="rating-numbers">
+                          <input type="radio" id="pur1" name="purchaseLikelihood" value="1"><label for="pur1">1</label>
+                          <input type="radio" id="pur2" name="purchaseLikelihood" value="2"><label for="pur2">2</label>
+                          <input type="radio" id="pur3" name="purchaseLikelihood" value="3"><label for="pur3">3</label>
+                          <input type="radio" id="pur4" name="purchaseLikelihood" value="4"><label for="pur4">4</label>
+                          <input type="radio" id="pur5" name="purchaseLikelihood" value="5"><label for="pur5">5</label>
+                      </div>
+                      <span> Väldigt sannolikt!</span>
+                  </div>
+              </div>
+
+              <div class="review-question">
+                  <p>Har du förslag på vad du vill se i AQTEN??</p>
+                  <textarea id="improvementSuggestions" class="feedback-textarea" rows="4" placeholder="Your feedback is valuable..."></textarea>
+              </div>
+          </div>
+          <div class="modal-footer">
+              <button id="btnSubmitGameReview" class="btn-action-final" disabled>Skicka</button>
+          </div>
+      </div>
   </div>
 
   <!-- NEW: Ambulance Pre-arrival Report Modal -->

@@ -241,3 +241,20 @@ export async function getPatchNotes() {
     if (!response.ok) throw new Error('Failed to get patch notes');
     return response.text(); // Return as text because the backend sends HTML
 }
+
+// --- NEW: Endpoint for submitting general game feedback ---
+export async function submitGameReview(reviewData) {
+    const response = await fetch(`${API_URL}/api/game-review`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(reviewData),
+        credentials: 'include'
+    });
+
+    if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Could not submit game review.');
+    }
+
+    return response.json();
+}

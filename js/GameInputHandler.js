@@ -431,45 +431,32 @@ export default class GameInputHandler {
         //Feedback
         document.getElementById('closeFeedback').addEventListener('click', () => this.game.closeFeedbackReport());
         document.getElementById('btnFinishFeedback').addEventListener('click', () => {
-            this.game.showRatingModal(); // Always show the rating modal
+            // This button now just closes the report. The rating modal is triggered automatically.
+            this.game.closeFeedbackReport();
         });
 
-        // --- Rating Modal Logic ---
-        const starContainer = document.getElementById('starRatingStars');
-
-        starContainer.addEventListener('mouseover', (e) => {
-            if (e.target.classList.contains('star')) {
-                starContainer.querySelectorAll('.star').forEach(star => {
-                    star.textContent = star.dataset.value <= e.target.dataset.value ? '★' : '☆';
-                });
-            }
-        });
-        starContainer.addEventListener('mouseout', () => {
-            starContainer.querySelectorAll('.star').forEach(star => {
-                star.textContent = '☆'; // Always reset to empty stars on mouseout
-            });
-        });
-        starContainer.addEventListener('click', (e) => {
-            if (e.target.classList.contains('star')) {
-                const rating = parseInt(e.target.dataset.value, 10);
-                this.game.submitCaseRating(rating); // Submit rating immediately
-            }
+        // --- NEW: Game Review Modal Logic ---
+        document.getElementById('btnSubmitGameReview').addEventListener('click', () => {
+            this.game.submitGameReview();
         });
 
-        // --- Text Feedback Modal Logic ---
-        const feedbackTextarea = document.getElementById('ratingFeedbackText');
-        const submitFeedbackBtn = document.getElementById('btnSubmitTextFeedback');
+        // --- NEW: Validation for the Game Review Modal ---
+        const reviewModal = document.getElementById('gameReviewModal');
+        const submitReviewBtn = document.getElementById('btnSubmitGameReview');
 
-        // Disable the button whenever the textarea is empty
-        feedbackTextarea.addEventListener('input', () => {
-            submitFeedbackBtn.disabled = feedbackTextarea.value.trim().length === 0;
-        });
+        const validateReviewForm = () => {
+            const semesterSelected = document.querySelector('input[name="semester"]:checked');
+            const educationalValueSelected = document.querySelector('input[name="educationalValue"]:checked');
+            const recommendLikelihoodSelected = document.querySelector('input[name="recommendLikelihood"]:checked');
+            const purchaseLikelihoodSelected = document.querySelector('input[name="purchaseLikelihood"]:checked');
 
-        submitFeedbackBtn.addEventListener('click', () => {
-            const feedbackText = feedbackTextarea.value;
-            this.game.submitFeedbackText(feedbackText);
-        });
-        document.getElementById('btnSkipTextFeedback').addEventListener('click', () => this.game.finishRatingProcess()); // This button is for skipping
+            // --- REVISED: Check if all radio button questions have been answered. Text area is now optional. ---
+            const isFormValid = semesterSelected && educationalValueSelected && recommendLikelihoodSelected && purchaseLikelihoodSelected;
+            submitReviewBtn.disabled = !isFormValid;
+        };
+
+        // Listen for any input or change within the modal to re-validate
+        reviewModal.addEventListener('input', validateReviewForm);
         document.querySelector('.feedback-tabs').addEventListener('click', (e) => {
             if (e.target.matches('.tab-link')) {
                 const tabId = e.target.dataset.tab;
