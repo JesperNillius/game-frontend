@@ -1092,7 +1092,7 @@ export default class GameMainController {
     async submitGameReview() {
         // --- NEW: Gather all data from the new modal and submit ---
         const reviewData = {
-            semester: document.querySelector('input[name="semester"]:checked')?.value,
+            semester: document.getElementById('semesterSelect').value,
             educationalValue: document.querySelector('input[name="educationalValue"]:checked')?.value,
             recommendLikelihood: document.querySelector('input[name="recommendLikelihood"]:checked')?.value,
             purchaseLikelihood: document.querySelector('input[name="purchaseLikelihood"]:checked')?.value,

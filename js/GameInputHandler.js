@@ -445,7 +445,7 @@ export default class GameInputHandler {
         const submitReviewBtn = document.getElementById('btnSubmitGameReview');
 
         const validateReviewForm = () => {
-            const semesterSelected = document.querySelector('input[name="semester"]:checked');
+            const semesterSelected = document.getElementById('semesterSelect').value;
             const educationalValueSelected = document.querySelector('input[name="educationalValue"]:checked');
             const recommendLikelihoodSelected = document.querySelector('input[name="recommendLikelihood"]:checked');
             const purchaseLikelihoodSelected = document.querySelector('input[name="purchaseLikelihood"]:checked');

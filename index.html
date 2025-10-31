@@ -603,21 +603,23 @@
           <div class="modal-body">
               <div class="review-question">
                   <p>Vilken termin studerar du?</p>
-                  <div class="rating-numbers semester-group">
-                      <input type="radio" id="sem1" name="semester" value="1"><label for="sem1">1</label>
-                      <input type="radio" id="sem2" name="semester" value="2"><label for="sem2">2</label>
-                      <input type="radio" id="sem3" name="semester" value="3"><label for="sem3">3</label>
-                      <input type="radio" id="sem4" name="semester" value="4"><label for="sem4">4</label>
-                      <input type="radio" id="sem5" name="semester" value="5"><label for="sem5">5</label>
-                      <input type="radio" id="sem6" name="semester" value="6"><label for="sem6">6</label>
-                      <input type="radio" id="sem7" name="semester" value="7"><label for="sem7">7</label>
-                      <input type="radio" id="sem8" name="semester" value="8"><label for="sem8">8</label>
-                      <input type="radio" id="sem9" name="semester" value="9"><label for="sem9">9</label>
-                      <input type="radio" id="sem10" name="semester" value="10"><label for="sem10">10</label>
-                      <input type="radio" id="sem11" name="semester" value="11"><label for="sem11">11</label>
-                      <input type="radio" id="sem12" name="semester" value="12"><label for="sem12">12</label>
-                      <input type="radio" id="sem-grad" name="semester" value="examinerad"><label for="sem-grad">Examinerad</label>
-                  </div>
+                  <!-- NEW: Use a dropdown for semester selection to save space -->
+                  <select id="semesterSelect" name="semester" class="review-select">
+                      <option value="" disabled selected>Välj termin...</option>
+                      <option value="1">Termin 1</option>
+                      <option value="2">Termin 2</option>
+                      <option value="3">Termin 3</option>
+                      <option value="4">Termin 4</option>
+                      <option value="5">Termin 5</option>
+                      <option value="6">Termin 6</option>
+                      <option value="7">Termin 7</option>
+                      <option value="8">Termin 8</option>
+                      <option value="9">Termin 9</option>
+                      <option value="10">Termin 10</option>
+                      <option value="11">Termin 11</option>
+                      <option value="12">Termin 12</option>
+                      <option value="examinerad">Examinerad</option>
+                  </select>
               </div>
               <div class="review-question">
                   <p>Hur lärorikt upplever du AQTEN?</p>

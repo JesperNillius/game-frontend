@@ -3149,3 +3149,16 @@ body.ipad #gameCanvas {
     appearance: none;
     cursor: pointer;
 }
+/* --- NEW: Styling for the review modal dropdown --- */
+.review-select {
+    width: 100%;
+    padding: 10px;
+    background-color: #1c1c1e;
+    border: 1px solid #555;
+    border-radius: 6px;
+    color: #fff;
+    font-size: 1em;
+    -webkit-appearance: none; /* Removes default browser styling on iOS */
+    appearance: none;
+    cursor: pointer;
+}
