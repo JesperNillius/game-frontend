@@ -761,7 +761,7 @@ export function renderCaseHistory(history) {
         tableHTML += `
             <tr class="history-main-row" data-row-id="${index}">
                 <td class="history-patient-cell">
-                    <img src="${item.patient_avatar_url || `${API_URL}/images/default_avatar.png`}" class="history-patient-icon" alt="Patient Avatar">
+                    <img src="${item.patient_avatar_url || `/images/default_avatar.png`}" class="history-patient-icon" alt="Patient Avatar">
                     <div>
                         <strong>${item.patientName}</strong>
                         <small>${item.patientAge} years, ${item.contactReason}</small>
