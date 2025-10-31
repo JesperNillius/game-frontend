@@ -6,6 +6,9 @@ const LIVE_API_URL = 'https://aqten-game-backend.onrender.com'; // Example URL
 const LOCAL_API_URL = 'http://localhost:3000';
 export const API_URL = IS_LIVE ? LIVE_API_URL : LOCAL_API_URL;
 
+// --- IMAGE DEBUG: Log the determined API_URL ---
+console.log(`[IMAGE DEBUG] API_URL determined to be: ${API_URL}`);
+
 // --- Auth Endpoints ---
 export async function registerUser(username, password) {
   const response = await fetch(`${API_URL}/api/auth/register`, {
