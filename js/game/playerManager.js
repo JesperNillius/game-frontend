@@ -116,6 +116,18 @@ export default class PlayerManager {
     async showCaseHistory() {
         try {
             const history = await api.getCaseHistory();
+
+            // --- FIX: Construct absolute avatar URLs before rendering ---
+            // This is the correct place to fix the paths, as this data comes
+            // directly from the database and doesn't know about the frontend's file structure.
+            history.forEach(item => {
+                if (item.patient && item.patient.patient_avatar) {
+                    // Create a new property with the full, correct URL.
+                    item.patient.patient_avatar_url = `${API_URL}/images/${item.patient.patient_avatar}`;
+                }
+            });
+            // --- END FIX ---
+
             this.ui.renderCaseHistory(history);
             document.getElementById('menu').classList.add('hidden');
             document.getElementById('caseHistoryModal').classList.add('visible');
