@@ -144,7 +144,9 @@ export function drawPatients(patients) {
       }
       const size = p.radius * 3.8;
       ctx.save();
-      ctx.translate(p.x, p.y);
+      // --- FIX: Round coordinates to prevent sub-pixel rendering artifacts (ghosting). ---
+      // This snaps the character to the nearest whole pixel before drawing.
+      ctx.translate(Math.round(p.x), Math.round(p.y));
       ctx.rotate(p.rotation);
       // ✅ Only draw the image if it exists and has loaded without errors.
       if (p.img && p.img.complete && p.img.naturalHeight !== 0) {
@@ -230,22 +232,15 @@ export function drawSpeechBubble(bubbleCenterX, bubbleCenterY, text, patientX, p
 
 
 export function renderLoop(camera, drawFunctions) {
-    // 1. Save the clean, scaled state of the context
-    ctx.save();
-
-    // 2. Reset transformations and clear the entire screen
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    // --- REVISED: Simplified and more robust clearing logic ---
+    // 1. Clear the entire canvas. This is the most important step to prevent ghosting.
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    // 3. Restore the clean, scaled state
-    ctx.restore();
     
-    // 4. Draw the background color
+    // 2. Draw the background color for the new frame.
     drawBackground();
 
-    // 5. Apply the camera view transformations
+    // 3. Apply the camera view transformations.
     ctx.save();
-    // Use clientWidth/clientHeight for centering, which respects the CSS size
     ctx.translate(canvas.clientWidth / 2, canvas.clientHeight / 2);
     ctx.scale(camera.zoom, camera.zoom);
     ctx.translate(-camera.x, -camera.y);
@@ -253,7 +248,7 @@ export function renderLoop(camera, drawFunctions) {
     // 6. Draw all the game objects
     drawFunctions.forEach(fn => fn());
 
-    // 7. Restore from the camera view, leaving a clean state for the next frame
+    // 5. Restore from the camera view, leaving a clean state for the next frame.
     ctx.restore();
 
     requestAnimationFrame(() => renderLoop(camera, drawFunctions));
